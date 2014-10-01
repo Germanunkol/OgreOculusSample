@@ -4,7 +4,7 @@
 #include <iostream>
 
 #include "OVR.h"
-//#include "Kernel/OVR_Math.h"
+#include "Kernel/OVR_Math.h"
 #include "OGRE/Ogre.h"
 using namespace OVR;
 
@@ -21,16 +21,18 @@ class Rift
 		bool update();
 
 		Ogre::Quaternion getOrientation() { return mOrientation; }
+		
+		static bool isInitialized;
 
 	private:
 
 		ovrHmd hmd;
-		ovrHmdDesc hmdDesc;
 		ovrFrameTiming frameTiming;
 
 		int mRiftID;
 
 		Ogre::Quaternion mOrientation;
+
 };
 
 #endif

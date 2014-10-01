@@ -101,7 +101,8 @@ void App::initOgre()
 
 void App::quitOgre()
 {
-	//if( mRoot ) delete mRoot;
+	// This should really not be commented out, but it crashes on my system... ?!
+	// if( mRoot ) delete mRoot;
 }
 
 ////////////////////////////////////////////////////////////
@@ -155,6 +156,7 @@ void App::initRift()
 		mRift = new Rift( 0 );
 	} catch( const char* e ) {
 		std::cout << ">> " << e << std::endl;
+		mRift = NULL;
 	}
 }
 
@@ -195,7 +197,11 @@ bool App::frameRenderingQueued(const Ogre::FrameEvent& evt)
 {
 	if (mShutdown) return false;
 
-	if(mRift) mRift->update();
+	if(mRift)
+	{
+		mRift->update();
+		mScene->setRiftPose( mRift->getOrientation() );
+	}
 
 	//update the standard input devices
 	mKeyboard->capture();

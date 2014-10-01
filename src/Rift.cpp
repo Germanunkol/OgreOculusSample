@@ -1,15 +1,25 @@
 #include "Rift.h"
 
+bool Rift::isInitialized = false;
+
 //////////////////////////////////////////
 // Static members for handling the API:
 //////////////////////////////////////////
 void Rift::init()
 {
-	ovr_Initialize();
+	if( ! isInitialized )
+	{
+		ovr_Initialize();
+		isInitialized = true;
+	}
 }
 void Rift::shutdown()
 {
-	ovr_Shutdown();
+	if( isInitialized )
+	{
+		ovr_Shutdown();
+		isInitialized = false;
+	}
 }
 
 /////////////////////////////////////////
@@ -18,8 +28,24 @@ void Rift::shutdown()
 
 Rift::Rift( int ID )
 {
-	hmd = NULL;
+	if( ! isInitialized ) throw( "Need to initialize first. Call Rift::init()!" );
 	std::cout << "Creating Rift (ID: " << ID << ")" << std::endl;
+	hmd = NULL;
+	ovr_Initialize();
+
+	hmd = ovrHmd_Create( ID );
+    if( !hmd )
+	{
+		hmd = NULL;
+		throw( "Could not connect to Rift." );
+	}
+
+	if (!ovrHmd_ConfigureTracking(hmd, ovrTrackingCap_Orientation | ovrTrackingCap_MagYawCorrection | ovrTrackingCap_Position, 0) )
+	{
+		ovrHmd_Destroy(hmd);
+		throw ("\t\tThis Rift does not support the features needed by the application.");
+	}
+
 	/*hmd = NULL;
 	
 	if ( ID > ovrHmd_Detect() )
@@ -55,24 +81,31 @@ Rift::Rift( int ID )
 Rift::~Rift()
 {
 	if(hmd) ovrHmd_Destroy(hmd);
+	ovr_Shutdown();
 }
 
 bool Rift::update()
 {
-	/*frameTiming = ovrHmd_BeginFrameTiming(hmd, 0); 
-	ovrSensorState ss = ovrHmd_GetSensorState(hmd, frameTiming.ScanoutMidpointSeconds);
+	if( !hmd ) return true;
 
-	if(ss.StatusFlags & (ovrStatus_OrientationTracked | ovrStatus_PositionTracked)){
-		ovrPosef pose = ss.Predicted.Pose;
+	frameTiming = ovrHmd_BeginFrameTiming(hmd, 0);
+	ovrTrackingState ts = ovrHmd_GetTrackingState(hmd, frameTiming.ScanoutMidpointSeconds);
 
-		mOrientation.x = pose.Orientation.x;
-		mOrientation.y = pose.Orientation.y;
-		mOrientation.z = pose.Orientation.z;
-		mOrientation.w = pose.Orientation.w;
+	if (ts.StatusFlags & (ovrStatus_OrientationTracked | ovrStatus_PositionTracked)) {
+		// The cpp compatibility layer is used to convert ovrPosef to Posef (see OVR_Math.h)
+		Posef pose = ts.HeadPose.ThePose;
+		float yaw, pitch, roll;
+		pose.Rotation.GetEulerAngles<Axis_Y, Axis_X, Axis_Z>(&yaw, &pitch, &roll);
 
-		ovrHmd_EndFrameTiming(hmd);
+		// Optional: move cursor back to starting position and print values
+		std::cout << "yaw: "   << RadToDegree(yaw)   << std::endl;
+		std::cout << "pitch: " << RadToDegree(pitch) << std::endl;
+		std::cout << "roll: "  << RadToDegree(roll)  << std::endl;
+		mOrientation = Ogre::Quaternion( pose.Rotation.w,
+			pose.Rotation.x, pose.Rotation.y, pose.Rotation.z );
+	}
 
-		//if (_kbhit()) exit(0);
-	}*/
+	ovrHmd_EndFrameTiming(hmd);
+
 	return true;
 }

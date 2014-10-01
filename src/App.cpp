@@ -47,7 +47,11 @@ App::~App()
 
 void App::initOgre()
 {
+#ifdef _DEBUG
+	mRoot = new Ogre::Root("plugins_d.cfg");
+#else
 	mRoot = new Ogre::Root("plugins.cfg");
+#endif
 	mRoot->addFrameListener(this);
 
 	// Load up resources according to resources.cfg:

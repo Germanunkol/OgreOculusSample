@@ -48,7 +48,7 @@ find_package(OculusSDK REQUIRED)
 message(STATUS OIS_LIBRARIES)
 message(STATUS ${OIS_LIBRARIES})
 message(STATUS ${OIS_LIBRARYDIR})
-message(STATUS ${OIS_INCLUDEDIR})
+message(STATUS ${OGRE_LIBRARIES})
 
 include_directories( ${OIS_INCLUDE_DIRS}
 	${OGRE_INCLUDE_DIRS}
@@ -95,14 +95,29 @@ endif()
 # Copy files needed by Ogre3D (plugins.cfg and resources.cfg)
 message(STATUS "Ogre plugin dir found: ${OGRE_PLUGIN_DIR_REL}")
 file(COPY plugins.cfg DESTINATION . )
+file(COPY plugins_d.cfg DESTINATION . )
 if (OGRE_RenderSystem_GL_FOUND)
 	# Change path to Ogre in plugins.cfg:
 	file(READ ${PROJECT_BINARY_DIR}/plugins.cfg PLUGINS_FILE)
+	file(READ ${PROJECT_BINARY_DIR}/plugins_d.cfg PLUGINS_D_FILE)
 
-	string(REGEX REPLACE "PluginFolder=[^\n]*"
-		"PluginFolder=./Plugins" PLUGINS_FILE_MODIFIED
-		${PLUGINS_FILE})
+	if( WIN32 )
+		string(REGEX REPLACE "PluginFolder=[^\n]*"
+			"PluginFolder=." PLUGINS_FILE_MODIFIED
+			${PLUGINS_FILE})
+		string(REGEX REPLACE "PluginFolder=[^\n]*"
+			"PluginFolder=." PLUGINS_D_FILE_MODIFIED
+			${PLUGINS_D_FILE})
+	else()
+		string(REGEX REPLACE "PluginFolder=[^\n]*"
+			"PluginFolder={OGRE_PLUGIN_DIR_REL}" PLUGINS_FILE_MODIFIED
+			${PLUGINS_FILE})
+		string(REGEX REPLACE "PluginFolder=[^\n]*"
+			"PluginFolder={OGRE_PLUGIN_DIR_REL}" PLUGINS_D_FILE_MODIFIED
+			${PLUGINS_D_FILE})
+	endif()
 	file(WRITE ${PROJECT_BINARY_DIR}/plugins.cfg ${PLUGINS_FILE_MODIFIED})
+	file(WRITE ${PROJECT_BINARY_DIR}/plugins_d.cfg ${PLUGINS_D_FILE_MODIFIED})
 endif()
 
 file(COPY resources.cfg DESTINATION . )
@@ -117,5 +132,36 @@ if( WIN32 )
 	file(COPY ${OGRE_HOME}/bin/debug/ DESTINATION ${PROJECT_BINARY_DIR}/Debug FILES_MATCHING PATTERN "*.dll")
 	file(COPY ${OGRE_HOME}/bin/Release/ DESTINATION ${PROJECT_BINARY_DIR}/Debug FILES_MATCHING PATTERN "*.dll")
 	file(COPY ${OGRE_HOME}/bin/Release/ DESTINATION ${PROJECT_BINARY_DIR}/Release FILES_MATCHING PATTERN "*.dll")
+
+	if(Boost_FOUND)
+
+	# Copy the Boost libraries:
+	get_filename_component( DIR ${Boost_SYSTEM_LIBRARY_DEBUG} DIRECTORY )
+	get_filename_component( S ${Boost_SYSTEM_LIBRARY_DEBUG} NAME_WE )
+
+	add_custom_command(TARGET OculusOgreSample POST_BUILD        # Adds a post-build event to MyTest
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different  # which executes "cmake - E copy_if_different..."
+			"${Boost_SYSTEM_LIBRARY_DEBUG}"      # <--this is in-file
+			$<TARGET_FILE_DIR:OculusOgreSample>)                 # <--this is out-file path               # <--this is out-file path
+			
+	add_custom_command(TARGET OculusOgreSample POST_BUILD        # Adds a post-build event to MyTest
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different  # which executes "cmake - E copy_if_different..."
+			"${DIR}/${S}.dll"      # <--this is in-file
+			$<TARGET_FILE_DIR:OculusOgreSample>)                 # <--this is out-file path
+
+	get_filename_component( DIR ${Boost_SYSTEM_LIBRARY_RELEASE} DIRECTORY )
+	get_filename_component( S ${Boost_SYSTEM_LIBRARY_RELEASE} NAME_WE )
+
+	add_custom_command(TARGET OculusOgreSample POST_BUILD        # Adds a post-build event to MyTest
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different  # which executes "cmake - E copy_if_different..."
+			"${Boost_SYSTEM_LIBRARY_RELEASE}"      # <--this is in-file
+			$<TARGET_FILE_DIR:OculusOgreSample>)                 # <--this is out-file path
+			
+	add_custom_command(TARGET OculusOgreSample POST_BUILD        # Adds a post-build event to MyTest
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different  # which executes "cmake - E copy_if_different..."
+			"${DIR}/${S}.dll"      # <--this is in-file
+			$<TARGET_FILE_DIR:OculusOgreSample>)                 # <--this is out-file path
+	
+	endif()
 
 endif()

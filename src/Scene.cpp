@@ -135,6 +135,12 @@ void Scene::setRiftPose( Ogre::Quaternion orientation )
 	mHeadNode->setOrientation( orientation );
 }
 
+void Scene::setIPD( float IPD )
+{
+	mCamLeft->setPosition( -IPD/2.0f, 0.0f, 0.0f );
+	mCamRight->setPosition( IPD/2.0f, 0.0f, 0.0f );
+}
+
 //////////////////////////////////////////////////////////////
 // Handle Input:
 //////////////////////////////////////////////////////////////

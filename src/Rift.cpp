@@ -26,7 +26,7 @@ void Rift::shutdown()
 // Per-Device methods (non static):
 /////////////////////////////////////////
 
-Rift::Rift( int ID, Ogre::Root* root, Ogre::RenderWindow* renderWindow )
+Rift::Rift( int ID, Ogre::Root* root, Ogre::RenderWindow* renderWindow, bool rotateView )
 {
 	if( ! isInitialized ) throw( "Need to initialize first. Call Rift::init()!" );
 	std::cout << "Creating Rift (ID: " << ID << ")" << std::endl;
@@ -96,8 +96,8 @@ Rift::Rift( int ID, Ogre::Root* root, Ogre::RenderWindow* renderWindow )
 	viewports[0].Pos.y = 0;
 	viewports[0].Size.w = recommendedTex0Size.w;
 	viewports[0].Size.h = recommendedTex0Size.h;
-	viewports[1].Pos.x = 0;
-	viewports[1].Pos.y = recommendedTex0Size.w;
+	viewports[1].Pos.x = recommendedTex0Size.w;
+	viewports[1].Pos.y = 0;
 	viewports[1].Size.w = recommendedTex1Size.w;
 	viewports[1].Size.h = recommendedTex1Size.h;
 
@@ -112,10 +112,30 @@ Rift::Rift( int ID, Ogre::Root* root, Ogre::RenderWindow* renderWindow )
 			eyeRenderDesc[eyeNum].Fov,
 			0,
 			&meshData );
-
-		/*ovrHmd_GetRenderScaleAndOffset( eyeRenderDesc[eyeNum].Fov,
-			renderTargetSize, viewports[eyeNum],
-			&UVScaleOffset[eyeNum]);*/
+		
+		if( eyeNum == 0 )
+		{
+			ovrHmd_GetRenderScaleAndOffset( eyeRenderDesc[eyeNum].Fov,
+				recommendedTex0Size, viewports[eyeNum],
+				UVScaleOffset);
+			/*Ogre::GpuProgramParametersSharedPtr params = matLeft->getTechnique(0)->getPass(0)->getVertexProgramParameters();
+			params->setNamedConstant( "EyeToSourceUVScale",
+					Ogre::Vector2( UVScaleOffset[0].x, UVScaleOffset[0].y ) );
+			params->setNamedConstant( "EyeToSourceUVOffset",
+					Ogre::Vector2( UVScaleOffset[1].x, UVScaleOffset[1].y ) );*/
+		} else {
+			ovrHmd_GetRenderScaleAndOffset( eyeRenderDesc[eyeNum].Fov,
+				recommendedTex1Size, viewports[eyeNum],
+				UVScaleOffset);
+			/*Ogre::GpuProgramParametersSharedPtr params = matRight->getTechnique(0)->getPass(0)->getVertexProgramParameters();
+			params->setNamedConstant( "EyeToSourceUVScale",
+					Ogre::Vector2( UVScaleOffset[0].x, UVScaleOffset[0].y ) );
+			params->setNamedConstant( "EyeToSourceUVOffset",
+					Ogre::Vector2( UVScaleOffset[1].x, UVScaleOffset[1].y ) );*/
+		}
+		
+		std::cout << "UVScaleOffset[0]: " << UVScaleOffset[0].x << ", " << UVScaleOffset[0].y << std::endl;
+		std::cout << "UVScaleOffset[1]: " << UVScaleOffset[1].x << ", " << UVScaleOffset[1].y << std::endl;
 
 		// create ManualObject
 		// TODO: Destroy the manual objects!!
@@ -144,12 +164,12 @@ Rift::Rift( int ID, Ogre::Root* root, Ogre::RenderWindow* renderWindow )
 				v.TanEyeAnglesG.y/2 + 0.5);
 			manual->textureCoord( v.TanEyeAnglesB.x/2 + 0.5,
 				v.TanEyeAnglesB.y/2 + 0.5);*/
-			manual->textureCoord( v.TanEyeAnglesR.x,
-				v.TanEyeAnglesR.y);
-			manual->textureCoord( v.TanEyeAnglesG.x,
-				v.TanEyeAnglesG.y);
-			manual->textureCoord( v.TanEyeAnglesB.x,
-				v.TanEyeAnglesB.y);
+			manual->textureCoord( v.TanEyeAnglesR.x*UVScaleOffset[0].x + UVScaleOffset[1].x,
+				v.TanEyeAnglesR.y*UVScaleOffset[0].y + UVScaleOffset[1].y);
+			manual->textureCoord( v.TanEyeAnglesG.x*UVScaleOffset[0].x + UVScaleOffset[1].x,
+				v.TanEyeAnglesG.y*UVScaleOffset[0].y + UVScaleOffset[1].y);
+			manual->textureCoord( v.TanEyeAnglesB.x*UVScaleOffset[0].x + UVScaleOffset[1].x,
+				v.TanEyeAnglesB.y*UVScaleOffset[0].y + UVScaleOffset[1].y);
 			manual->colour( v.VignetteFactor, v.VignetteFactor, v.VignetteFactor, v.TimeWarpFactor );
 		}
 		for( unsigned int i = 0; i < meshData.IndexCount; i++ )
@@ -165,12 +185,18 @@ Rift::Rift( int ID, Ogre::Root* root, Ogre::RenderWindow* renderWindow )
 		meshNode->attachObject( manual );
 	}
 
+
 	// Create a camera in the (new, external) scene so the mesh can be rendered onto it:
 	mCamera = mSceneMgr->createCamera("OculusRiftExternalCamera");
 	mCamera->setFarClipDistance( 50 );
 	mCamera->setNearClipDistance( 0.001 );
 	mCamera->setProjectionType( Ogre::PT_ORTHOGRAPHIC );
 	mCamera->setOrthoWindow( 2, 2 );
+
+	if( rotateView )
+	{
+		mCamera->roll( Ogre::Degree( -90 ) );
+	}
 
 	mSceneMgr->getRootSceneNode()->attachObject( mCamera );
 
@@ -179,6 +205,9 @@ Rift::Rift( int ID, Ogre::Root* root, Ogre::RenderWindow* renderWindow )
 
 	mViewport = mRenderWindow->addViewport( mCamera );
 	mViewport->setBackgroundColour(Ogre::ColourValue::Black);
+
+	// Set up IPD in meters:
+	mIPD = 0.064;
 }
 
 Rift::~Rift()

@@ -1,6 +1,13 @@
 vertex_program OculusDistortionVertex glsl
 {
     source OculusDistortionVertex.glsl
+	default_params
+	{
+		param_named EyeToSourceUVScale float2 1.0 1.0
+		param_named EyeToSourceUVOffset float2 0.0 0.0
+		param_named EyeRotationStart matrix4x4 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0;
+		param_named EyeRotationEnd matrix4x4 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0;
+	}
 }
 fragment_program OculusDistortionFragment glsl
 {

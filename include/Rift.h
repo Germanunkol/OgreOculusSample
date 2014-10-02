@@ -11,7 +11,7 @@ using namespace OVR;
 class Rift
 {
 	public:
-		Rift( int ID, Ogre::Root* root, Ogre::RenderWindow* renderWindow );
+		Rift( int ID, Ogre::Root* root, Ogre::RenderWindow* renderWindow, bool rotateView );
 		~Rift();
 		
 		static void init();
@@ -23,6 +23,9 @@ class Rift
 		bool update( float dt );
 
 		Ogre::Quaternion getOrientation() { return mOrientation; }
+
+		// returns interpupillary distance in meters:
+		float getIPD() { return mIPD; }
 		
 		static bool isInitialized;
 
@@ -52,6 +55,8 @@ class Rift
 		Ogre::SceneNode* mHeadNode;
 		Ogre::SceneNode* mBodyNode;
 		Ogre::SceneNode* mBodyTiltNode;
+
+		float mIPD;
 };
 
 #endif

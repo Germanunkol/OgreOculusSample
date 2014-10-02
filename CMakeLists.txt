@@ -69,6 +69,7 @@ set(HDRS
 	include/App.h
 	include/Scene.h
 	include/Rift.h
+	include/Globals.h
 )
  
 set(SRCS
@@ -76,6 +77,7 @@ set(SRCS
 	src/App.cpp
 	src/Scene.cpp
 	src/Rift.cpp
+	src/Globals.cpp
 )
 
 add_executable(OculusOgreSample ${HDRS} ${SRCS})

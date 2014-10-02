@@ -91,10 +91,18 @@ void App::initOgre()
 
 	// Create the Windows:
 	Ogre::NameValuePairList miscParams;
-	miscParams["monitorIndex"] = Ogre::StringConverter::toString(2);
-	miscParams["border"] = "fixed";
-	mWindow = mRoot->createRenderWindow("Oculus Rift Liver Visualization", 1920, 1080, false, &miscParams);
-	mSmallWindow = mRoot->createRenderWindow("DEBUG Oculus Rift Liver Visualization", 1920*debugWindowSize, 1080*debugWindowSize, false, &miscParams);   
+	miscParams["monitorIndex"] = Ogre::StringConverter::toString(1);
+	miscParams["border "] = "none";
+	
+	Ogre::NameValuePairList miscParamsSmall;
+	miscParamsSmall["monitorIndex"] = Ogre::StringConverter::toString(0);
+
+	if( !ROTATE_VIEW )
+		mWindow = mRoot->createRenderWindow("Oculus Rift Liver Visualization", 1920, 1080, false, &miscParams);
+	else
+		mWindow = mRoot->createRenderWindow("Oculus Rift Liver Visualization", 1080, 1920, false, &miscParams);
+
+	mSmallWindow = mRoot->createRenderWindow("DEBUG Oculus Rift Liver Visualization", 1920*debugWindowSize, 1080*debugWindowSize, false, &miscParamsSmall);   
 
 	Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
 }
@@ -153,8 +161,9 @@ void App::initRift()
 	// Try to initialize the Oculus Rift (ID 0):
 	try {
 		Rift::init();
-		mRift = new Rift( 0, mRoot, mWindow );
+		mRift = new Rift( 0, mRoot, mWindow, ROTATE_VIEW );
 		mRift->setCameras( mScene->getLeftCamera(), mScene->getRightCamera() );
+		mScene->setIPD( mRift->getIPD() );
 	} catch( const char* e ) {
 		std::cout << ">> " << e << std::endl;
 		mRift = NULL;
@@ -183,8 +192,14 @@ void App::createViewports()
 		mViewportR = mWindow->addViewport(mScene->getRightCamera(), 1, 0.5, 0.0, 0.5, 1.0 );
 		mViewportR->setBackgroundColour(Ogre::ColourValue(0.15,0.15,0.15));*/
 		
-		mScene->getLeftCamera()->setAspectRatio( 0.5*mWindow->getWidth()/mWindow->getHeight() );
-		mScene->getRightCamera()->setAspectRatio( 0.5*mWindow->getWidth()/mWindow->getHeight() );
+		if( !ROTATE_VIEW )
+		{
+			mScene->getLeftCamera()->setAspectRatio( 0.5*mWindow->getWidth()/mWindow->getHeight() );
+			mScene->getRightCamera()->setAspectRatio( 0.5*mWindow->getWidth()/mWindow->getHeight() );
+		} else {
+			mScene->getLeftCamera()->setAspectRatio( 0.5*mWindow->getHeight()/mWindow->getWidth() );
+			mScene->getRightCamera()->setAspectRatio( 0.5*mWindow->getHeight()/mWindow->getWidth() );
+		}
 	}
 
     Ogre::Viewport* debugL = mSmallWindow->addViewport(mScene->getLeftCamera(), 0, 0.0, 0.0, 0.5, 1.0 );

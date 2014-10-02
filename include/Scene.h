@@ -20,6 +20,7 @@ class Scene
 
 		Ogre::Camera* getLeftCamera() { return mCamLeft; }
 		Ogre::Camera* getRightCamera() { return mCamRight; }
+		void setIPD( float IPD );
 
 		void setRiftPose( Ogre::Quaternion orientation );
 

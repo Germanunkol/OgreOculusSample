@@ -13,6 +13,7 @@ class Rift;
 #include "OGRE/Ogre.h"
 #include "OIS/OIS.h"
 #include "Scene.h"
+#include "Globals.h"
 
 // The Debug window's size is the Oculus Rift Resolution times this factor.
 #define debugWindowSize 0.5

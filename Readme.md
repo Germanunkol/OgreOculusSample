@@ -4,8 +4,13 @@ Oculus Rift Rendering in Ogre
 TODO:
 -------------
 
-- Add distortion
-- Add command line switch to enable window rotation
+- [Done] Add distortion
+- [Done] Add command line switch to enable window rotation
+- Add Command line switch to control which monitor the screen goes to
+- Add time warp
+- Distortion seems to be off - might be fixed with time warp...?
+- Add Position tracking
+- Add License
 
 Note:
 -------------

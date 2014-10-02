@@ -153,7 +153,8 @@ void App::initRift()
 	// Try to initialize the Oculus Rift (ID 0):
 	try {
 		Rift::init();
-		mRift = new Rift( 0 );
+		mRift = new Rift( 0, mRoot, mWindow );
+		mRift->setCameras( mScene->getLeftCamera(), mScene->getRightCamera() );
 	} catch( const char* e ) {
 		std::cout << ">> " << e << std::endl;
 		mRift = NULL;
@@ -177,10 +178,10 @@ void App::createViewports()
 	// Each viewport spans half of the screen
 	if(mWindow)
 	{
-		mViewportL = mWindow->addViewport(mScene->getLeftCamera(), 0, 0.0, 0.0, 0.5, 1.0 );
+		/*mViewportL = mWindow->addViewport(mScene->getLeftCamera(), 0, 0.0, 0.0, 0.5, 1.0 );
 		mViewportL->setBackgroundColour(Ogre::ColourValue(0.15,0.15,0.15));
 		mViewportR = mWindow->addViewport(mScene->getRightCamera(), 1, 0.5, 0.0, 0.5, 1.0 );
-		mViewportR->setBackgroundColour(Ogre::ColourValue(0.15,0.15,0.15));
+		mViewportR->setBackgroundColour(Ogre::ColourValue(0.15,0.15,0.15));*/
 		
 		mScene->getLeftCamera()->setAspectRatio( 0.5*mWindow->getWidth()/mWindow->getHeight() );
 		mScene->getRightCamera()->setAspectRatio( 0.5*mWindow->getWidth()/mWindow->getHeight() );
@@ -199,8 +200,13 @@ bool App::frameRenderingQueued(const Ogre::FrameEvent& evt)
 
 	if(mRift)
 	{
-		mRift->update();
-		mScene->setRiftPose( mRift->getOrientation() );
+		if ( mRift->update( evt.timeSinceLastFrame ) )
+		{
+			mScene->setRiftPose( mRift->getOrientation() );
+		} else {
+			delete mRift;
+			mRift = NULL;
+		}
 	}
 
 	//update the standard input devices

@@ -1,0 +1,32 @@
+material Oculus/LeftEye
+{
+    receive_shadows off
+
+    technique
+    {
+        pass Oculus/LeftEye
+        {
+            lighting off
+			texture_unit 
+            {
+            }
+        }
+    }
+}
+
+material Oculus/RightEye
+{
+    receive_shadows off
+
+    technique
+    {
+        pass Oculus/RightEye
+        {
+            lighting off
+
+			texture_unit 
+            {
+            }
+        }
+    }
+}

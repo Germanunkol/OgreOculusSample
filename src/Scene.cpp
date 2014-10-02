@@ -34,6 +34,8 @@ void Scene::createRoom()
 	Ogre::Entity* cubeEnt2 = mSceneMgr->createEntity( "Cube2.mesh" );
 	cubeNode2->attachObject( cubeEnt2 );
 	cubeNode2->setPosition( -1.0, 0.0, 0.0 );
+	cubeNode->setScale( 0.5, 0.5, 0.5 );
+	cubeNode2->setScale( 0.5, 0.5, 0.5 );
 
 	Ogre::Entity* roomEnt = mSceneMgr->createEntity( "Room.mesh" );
 	mRoomNode->attachObject( roomEnt );
@@ -58,7 +60,8 @@ void Scene::createCameras()
 
 	// Create a scene nodes which the cams will be attached to:
 	mBodyNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("BodyNode");
-	mHeadNode = mBodyNode->createChildSceneNode("HeadNode"); 
+	mBodyTiltNode = mBodyNode->createChildSceneNode();
+	mHeadNode = mBodyTiltNode->createChildSceneNode("HeadNode"); 
 	mBodyNode->setFixedYawAxis( true );	// don't roll!  
 
 	mHeadNode->attachObject(mCamLeft);
@@ -94,8 +97,8 @@ void Scene::createCameras()
 	mHeadLight->setDiffuseColour( 1.0, 1.0, 1.0 );
 	mHeadNode->attachObject( mHeadLight );*/
 
-	mBodyNode->setPosition( 2.0, 0.5, 2.0 );
-	mBodyNode->lookAt( Ogre::Vector3::ZERO, Ogre::SceneNode::TS_WORLD );
+	mBodyNode->setPosition( 4.0, 1.5, 4.0 );
+	//mBodyNode->lookAt( Ogre::Vector3::ZERO, Ogre::SceneNode::TS_WORLD );
 
 	Ogre::Light* light = mSceneMgr->createLight();
 	light->setType(Ogre::Light::LT_POINT);
@@ -108,6 +111,19 @@ void Scene::createCameras()
 
 void Scene::update( float dt )
 {
+	float forward = (mKeyboard->isKeyDown( OIS::KC_W ) ? 0 : 1) + (mKeyboard->isKeyDown( OIS::KC_S ) ? 0 : -1);
+	float leftRight = (mKeyboard->isKeyDown( OIS::KC_A ) ? 0 : 1) + (mKeyboard->isKeyDown( OIS::KC_D ) ? 0 : -1);
+
+	if( mKeyboard->isKeyDown( OIS::KC_LSHIFT ) )
+	{
+		forward *= 3;
+		leftRight *= 3;
+	}
+	
+	Ogre::Vector3 dirX = mBodyTiltNode->_getDerivedOrientation()*Ogre::Vector3::UNIT_X;
+	Ogre::Vector3 dirZ = mBodyTiltNode->_getDerivedOrientation()*Ogre::Vector3::UNIT_Z;
+
+	mBodyNode->setPosition( mBodyNode->getPosition() + dirZ*forward*dt + dirX*leftRight*dt );
 }
 
 //////////////////////////////////////////////////////////////
@@ -135,8 +151,8 @@ bool Scene::mouseMoved( const OIS::MouseEvent& e )
 {
 	if( mMouse->getMouseState().buttonDown( OIS::MB_Left ) )
 	{
-		mBodyNode->yaw( Ogre::Degree( e.state.X.rel ) );
-		mBodyNode->pitch( Ogre::Degree( e.state.Y.rel ) );
+		mBodyNode->yaw( Ogre::Degree( -0.3*e.state.X.rel ) );
+		mBodyTiltNode->pitch( Ogre::Degree( -0.3*e.state.Y.rel ) );
 	}
 	return true;
 }

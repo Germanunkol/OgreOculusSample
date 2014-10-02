@@ -41,6 +41,7 @@ class Scene
 
 		Ogre::SceneNode* mHeadNode;
 		Ogre::SceneNode* mBodyNode;
+		Ogre::SceneNode* mBodyTiltNode;
 
 		Ogre::SceneNode* mRoomNode;
 };

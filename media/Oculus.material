@@ -1,3 +1,13 @@
+vertex_program OculusDistortionVertex glsl
+{
+    source OculusDistortionVertex.glsl
+}
+fragment_program OculusDistortionFragment glsl
+{
+    source OculusDistortionFragment.glsl
+}
+
+
 material Oculus/LeftEye
 {
     receive_shadows off
@@ -6,6 +16,15 @@ material Oculus/LeftEye
     {
         pass Oculus/LeftEye
         {
+			vertex_program_ref OculusDistortionVertex
+			{
+			}
+
+			fragment_program_ref OculusDistortionFragment
+			{
+				param_named diffuseMap int 0
+			}
+
             lighting off
 			texture_unit 
             {

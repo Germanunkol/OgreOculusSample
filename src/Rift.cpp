@@ -135,12 +135,22 @@ Rift::Rift( int ID, Ogre::Root* root, Ogre::RenderWindow* renderWindow )
  
 		for( unsigned int i = 0; i < meshData.VertexCount; i++ )
 		{
-			manual->position( meshData.pVertexData[i].ScreenPosNDC.x,
-				meshData.pVertexData[i].ScreenPosNDC.y, 0 );
-			//manual->textureCoord( meshData.pVertexData[i].TanEyeAnglesG.x,
-			//	meshData.pVertexData[i].TanEyeAnglesG.y);
-			manual->textureCoord( meshData.pVertexData[i].TanEyeAnglesG.x/2 + 0.5,
-				meshData.pVertexData[i].TanEyeAnglesG.y/2 + 0.5);
+			ovrDistortionVertex v = meshData.pVertexData[i];
+			manual->position( v.ScreenPosNDC.x,
+				v.ScreenPosNDC.y, 0 );
+			/*manual->textureCoord( v.TanEyeAnglesR.x/2 + 0.5,
+				v.TanEyeAnglesR.y/2 + 0.5);
+			manual->textureCoord( v.TanEyeAnglesG.x/2 + 0.5,
+				v.TanEyeAnglesG.y/2 + 0.5);
+			manual->textureCoord( v.TanEyeAnglesB.x/2 + 0.5,
+				v.TanEyeAnglesB.y/2 + 0.5);*/
+			manual->textureCoord( v.TanEyeAnglesR.x,
+				v.TanEyeAnglesR.y);
+			manual->textureCoord( v.TanEyeAnglesG.x,
+				v.TanEyeAnglesG.y);
+			manual->textureCoord( v.TanEyeAnglesB.x,
+				v.TanEyeAnglesB.y);
+			manual->colour( v.VignetteFactor, v.VignetteFactor, v.VignetteFactor, v.TimeWarpFactor );
 		}
 		for( unsigned int i = 0; i < meshData.IndexCount; i++ )
 		{
@@ -159,6 +169,8 @@ Rift::Rift( int ID, Ogre::Root* root, Ogre::RenderWindow* renderWindow )
 	mCamera = mSceneMgr->createCamera("OculusRiftExternalCamera");
 	mCamera->setFarClipDistance( 50 );
 	mCamera->setNearClipDistance( 0.001 );
+	mCamera->setProjectionType( Ogre::PT_ORTHOGRAPHIC );
+	mCamera->setOrthoWindow( 2, 2 );
 
 	mSceneMgr->getRootSceneNode()->attachObject( mCamera );
 

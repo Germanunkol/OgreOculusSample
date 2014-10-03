@@ -1,5 +1,12 @@
-Oculus Rift Rendering in Ogre
-=============================
+Oculus Rift Rendering in OGRE 3D
+================================
+
+Goal:
+-------------
+
+- Rendering to the Oculus Rift using _extended_ mode.
+- Should work with DK2
+- OpenGL only at this point.
 
 TODO:
 -------------
@@ -7,8 +14,8 @@ TODO:
 - [Done] Add distortion
 - [Done] Add command line switch to enable window rotation
 - Add Command line switch to control which monitor the screen goes to
+- Add vignette
 - Add time warp
-- Distortion seems to be off - might be fixed with time warp...?
 - Add Position tracking
 - Add License
 
@@ -19,11 +26,6 @@ At the point of writing, the Oculus DK2 only works on Windows, so this project h
 on other platforms. However, all used libraries run on Win, Linux and Mac, so it should be easy enough to
 port once the Oculus SDK has been released for those platforms.
 
-Goal:
--------------
-
-- Rendering to the Oculus Rift using extended mode.
-- Should work with DK2
 
 Prerequisites:
 -------------

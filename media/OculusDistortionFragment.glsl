@@ -1,12 +1,13 @@
 
-//varying vec4 uv0;
-uniform sampler3D diffuseMap;
+uniform sampler2D diffuseMap;
 
 void main(void)
 {
-	float red = texture3D(diffuseMap, gl_TexCoord[0]).red;
-	float green = texture3D(diffuseMap, gl_TexCoord[1]).green;
-	float blue = texture3D(diffuseMap, gl_TexCoord[2]).blue;
+	float red = texture2D(diffuseMap, gl_TexCoord[0].xy).r;
+	float green = texture2D(diffuseMap, gl_TexCoord[1].xy).g;
+	float blue = texture2D(diffuseMap, gl_TexCoord[2].xy).b;
 	
-	gl_FragColor = float4( red, green, blue, 1.0 );
+	gl_FragColor = vec4( red, green, blue, 1.0 );
+	//gl_FragColor = texture2D(diffuseMap, gl_TexCoord[0].xy);//vec4( red, green, blue, 1.0 );
+	//gl_FragColor = vec4( 1.0, 1.0, 1.0, 1.0 );
 }

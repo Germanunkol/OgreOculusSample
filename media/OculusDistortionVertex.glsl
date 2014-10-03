@@ -2,37 +2,39 @@
 
 // Values automatically defined by Ogre/OpenGL:
 attribute vec4 vertex;
-attribute vec4 uv0;			// Red channel
-attribute vec4 uv1;			// Green channel
-attribute vec4 uv2;			// Blue channel
+attribute vec2 uv0;			// Red channel
+attribute vec2 uv1;			// Green channel
+attribute vec2 uv2;			// Blue channel
+attribute vec4 colour;			// Vertex Colour
 
 // Load in values defined in the material:
 uniform mat4 worldViewProj;
-uniform vec2 EyeToSourceUVScale;
-uniform vec2 EyeToSourceUVOffset;
-uniform mat4 EyeRotationStart;
-uniform mat4 EyeRotationEnd;
+uniform vec2 eyeToSourceUVScale;
+uniform vec2 eyeToSourceUVOffset;
+uniform mat4 eyeRotationStart;
+uniform mat4 eyeRotationEnd;
 
-float2 TimewarpTexCoord( float2 texCoord, mat4 rotMat )
+vec2 timewarpTexCoord( vec2 texCoord, mat4 rotMat )
 {
-	float3 transformed = vec3( (rotMat * vec4( texCoord.xy, 1, 1) ).xyz );
+	vec3 transformed =  (rotMat * vec4( texCoord.xy, 1, 1) ).xyz;
 	
-	float2 flattened = (transformed.xy / transformed.z );
+	vec2 flattened = transformed.xy / transformed.z;
 	
-	return( EyeToSourceUVScale * flattened + EyeToSourceUVOffset );
+	return eyeToSourceUVScale * flattened + eyeToSourceUVOffset;
 }
 
 void main(void)
 {
-	/*mat4 lerpedEyeRot = mix( EyeRotationStart, EyeRotationEnd, timewarpLerpFactor );
+	/*float timewarpLerpFactor = 0.0;
+	mat4 lerpedEyeRot = eyeRotationStart * (1 - timewarpLerpFactor) + eyeRotationEnd * timewarpLerpFactor;
 
-	gl_TexCoord[0] = TimewarpTexCoord( uv0, lerpedEyeRot );
-	gl_TexCoord[1] = TimewarpTexCoord( uv1, lerpedEyeRot );
-	gl_TexCoord[2] = TimewarpTexCoord( uv2, lerpedEyeRot );*/
+	gl_TexCoord[0] = vec4( timewarpTexCoord( uv0, lerpedEyeRot ), 0.0, 0.0 );
+	gl_TexCoord[1] = vec4( timewarpTexCoord( uv1, lerpedEyeRot ), 0.0, 0.0 );
+	gl_TexCoord[2] = vec4( timewarpTexCoord( uv2, lerpedEyeRot ), 0.0, 0.0 );*/
 	
-	gl_TexCoord[0] = return( EyeToSourceUVScale * uv0 + EyeToSourceUVOffset );
-	gl_TexCoord[1] = return( EyeToSourceUVScale * uv1 + EyeToSourceUVOffset );
-	gl_TexCoord[2] = return( EyeToSourceUVScale * uv2 + EyeToSourceUVOffset );
+	gl_TexCoord[0] = vec4( eyeToSourceUVScale * uv0 + eyeToSourceUVOffset, 0.0, 0.0 );
+	gl_TexCoord[1] = vec4( eyeToSourceUVScale * uv1 + eyeToSourceUVOffset,  0.0, 0.0 );
+	gl_TexCoord[2] = vec4( eyeToSourceUVScale * uv2 + eyeToSourceUVOffset,  0.0, 0.0 );
 
 	gl_Position = worldViewProj * vertex;
 

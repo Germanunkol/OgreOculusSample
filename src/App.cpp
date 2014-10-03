@@ -98,9 +98,10 @@ void App::initOgre()
 	miscParamsSmall["monitorIndex"] = Ogre::StringConverter::toString(0);
 
 	if( !ROTATE_VIEW )
-		mWindow = mRoot->createRenderWindow("Oculus Rift Liver Visualization", 1920, 1080, false, &miscParams);
+		mWindow = mRoot->createRenderWindow("Oculus Rift Liver Visualization", 1920, 1080, true, &miscParams);
+		//mWindow = mRoot->createRenderWindow("Oculus Rift Liver Visualization", 1920*0.5, 1080*0.5, false, &miscParams);
 	else
-		mWindow = mRoot->createRenderWindow("Oculus Rift Liver Visualization", 1080, 1920, false, &miscParams);
+		mWindow = mRoot->createRenderWindow("Oculus Rift Liver Visualization", 1080, 1920, true, &miscParams);
 
 	mSmallWindow = mRoot->createRenderWindow("DEBUG Oculus Rift Liver Visualization", 1920*debugWindowSize, 1080*debugWindowSize, false, &miscParamsSmall);   
 
@@ -192,14 +193,14 @@ void App::createViewports()
 		mViewportR = mWindow->addViewport(mScene->getRightCamera(), 1, 0.5, 0.0, 0.5, 1.0 );
 		mViewportR->setBackgroundColour(Ogre::ColourValue(0.15,0.15,0.15));*/
 		
-		if( !ROTATE_VIEW )
+		/*if( !ROTATE_VIEW )
 		{
 			mScene->getLeftCamera()->setAspectRatio( 0.5*mWindow->getWidth()/mWindow->getHeight() );
 			mScene->getRightCamera()->setAspectRatio( 0.5*mWindow->getWidth()/mWindow->getHeight() );
 		} else {
 			mScene->getLeftCamera()->setAspectRatio( 0.5*mWindow->getHeight()/mWindow->getWidth() );
 			mScene->getRightCamera()->setAspectRatio( 0.5*mWindow->getHeight()/mWindow->getWidth() );
-		}
+		}*/
 	}
 
     Ogre::Viewport* debugL = mSmallWindow->addViewport(mScene->getLeftCamera(), 0, 0.0, 0.0, 0.5, 1.0 );

@@ -55,6 +55,9 @@ class Rift
 		Ogre::SceneNode* mHeadNode;
 		Ogre::SceneNode* mBodyNode;
 		Ogre::SceneNode* mBodyTiltNode;
+		
+		Ogre::MaterialPtr mMatLeft;
+		Ogre::MaterialPtr mMatRight;
 
 		float mIPD;
 };

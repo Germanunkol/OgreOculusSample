@@ -8,7 +8,7 @@ Goal:
 - Should work with DK2
 - OpenGL only at this point.
 
-![Screenshot of Example Scene](Screenshot.png)
+![Screenshot of Example Scene](Screenshot.png?raw=true)
 
 
 TODO:

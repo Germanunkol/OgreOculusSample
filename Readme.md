@@ -65,7 +65,7 @@ Getting it up and running is designed to be as simple as possible. See App::init
 - Create a Renderwindow, but DON'T ATTATCH ANY VIEWPORTS! The rift class will do this later. You can create the window directly on your second monitor (set "monitorIndex" to "1" instead of "0"), or let the user choose a screen at startup.
 - Create two Cameras in your Scene, next to each other, facing in the same direction. Best practice: Create a scene node "mBodyNode" which represents the user's body. Then add a child scene node (mHeadNode) which is the head node. Let the user control the body (walking, turning) and the Rift control the head node. Attach your cameras to the head node.
 - Call Rift::init() once.
-- Create a new Rift and pass the Window, your ogre root and a bool to it - the bool controls whether the window should be rotated sideways (in case your Graphics Card doesn't allow you to rotate the attached monitor which the Rift creates).
+- Create a new Rift and pass the Window, your ogre root and a bool to it - the bool controls whether the window should be rotated sideways (in case your Graphics Card doesn't allow you to rotate the attached monitor which the Rift creates). If using rotated view, make sure to create your window in a rotated manner as well, i.e. the window dimensions should be 1080x1920 instead of 1920x1080, if you rotate.
 
     mRift = new Rift( 0, mRoot, mWindow, false );
 

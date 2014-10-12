@@ -8,6 +8,9 @@ Goal:
 - Should work with DK2
 - OpenGL only at this point.
 
+![Screenshot of Example Scene](Screenshot.png)
+
+
 TODO:
 -------------
 
@@ -15,9 +18,9 @@ TODO:
 - [Done] Add distortion
 - [Done] Add command line switch to enable window rotation
 - [Done] Add Position tracking
-- Add Command line switch to control which monitor the screen goes to
+- [Canceled - User should decide how he/she wants to do this] Add Command line switch to control which monitor the screen goes to
 - Add vignette
-- Add time warp
+- Maybe add time warp
 - Add License
 
 Note:
@@ -86,3 +89,6 @@ My Overlays are all wrong or don't show!
 - The Rift class creates a new SceneManager and some of its own viewports. Modify the viewport creation to your needs (to show or not show overlays).
 - Generally speaking, I (and the Developers behind the Oculus Rift) advice not to use overlays for your UI - instead put stuff on in-game elements wherever possible.
 
+Input doesn't work!
+
+- If you use OIS, the window needs focus. When using the Rift, the Window is on a seperate screen. Moving your mouse over to the second screen and clicking should give the window focus.

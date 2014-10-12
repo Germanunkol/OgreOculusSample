@@ -28,16 +28,26 @@ void Scene::createRoom()
 
 	Ogre::SceneNode* cubeNode = mRoomNode->createChildSceneNode();
 	Ogre::Entity* cubeEnt = mSceneMgr->createEntity( "Cube.mesh" );
+	cubeEnt->getSubEntity(0)->setMaterialName( "CubeMaterialRed" );
 	cubeNode->attachObject( cubeEnt );
 	cubeNode->setPosition( 1.0, 0.0, 0.0 );
 	Ogre::SceneNode* cubeNode2 = mRoomNode->createChildSceneNode();
-	Ogre::Entity* cubeEnt2 = mSceneMgr->createEntity( "Cube2.mesh" );
+	Ogre::Entity* cubeEnt2 = mSceneMgr->createEntity( "Cube.mesh" );
+	cubeEnt2->getSubEntity(0)->setMaterialName( "CubeMaterialGreen" );
 	cubeNode2->attachObject( cubeEnt2 );
-	cubeNode2->setPosition( -1.0, 0.0, 0.0 );
+	cubeNode2->setPosition( 3.0, 0.0, 0.0 );
 	cubeNode->setScale( 0.5, 0.5, 0.5 );
 	cubeNode2->setScale( 0.5, 0.5, 0.5 );
+	
+	Ogre::SceneNode* cubeNode3 = mRoomNode->createChildSceneNode();
+	Ogre::Entity* cubeEnt3 = mSceneMgr->createEntity( "Cube.mesh" );
+	cubeEnt3->getSubEntity(0)->setMaterialName( "CubeMaterialWhite" );
+	cubeNode3->attachObject( cubeEnt3 );
+	cubeNode3->setPosition( -1.0, 0.0, 0.0 );
+	cubeNode3->setScale( 0.5, 0.5, 0.5 );
 
 	Ogre::Entity* roomEnt = mSceneMgr->createEntity( "Room.mesh" );
+	roomEnt->setCastShadows( false );
 	mRoomNode->attachObject( roomEnt );
 
 	Ogre::Light* roomLight = mSceneMgr->createLight();
@@ -46,7 +56,7 @@ void Scene::createRoom()
 	roomLight->setShadowFarDistance( 30 );
 	roomLight->setAttenuation( 65, 1.0, 0.07, 0.017 );
 	roomLight->setSpecularColour( .25, .25, .25 );
-	roomLight->setDiffuseColour( 0.35, 0.27, 0.23 );
+	roomLight->setDiffuseColour( 0.85, 0.76, 0.7 );
 
 	roomLight->setPosition( 5, 5, 5 );
 

@@ -247,6 +247,9 @@ bool App::keyPressed( const OIS::KeyEvent& e )
 {
 	mScene->keyPressed( e );
 
+	if( e.key == OIS::KC_P )
+		mWindow->writeContentsToFile("Screenshot.png");
+
 	return true;
 }
 bool App::keyReleased( const OIS::KeyEvent& e )

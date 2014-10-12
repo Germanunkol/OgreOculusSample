@@ -195,10 +195,11 @@ Rift::Rift( int ID, Ogre::Root* root, Ogre::RenderWindow* renderWindow, bool rot
 
 	mViewport = mRenderWindow->addViewport( mCamera );
 	mViewport->setBackgroundColour(Ogre::ColourValue::Black);
+	mViewport->setOverlaysEnabled(true);
 
 	// Set up IPD in meters:
-	// TODO: Get this from actual rift setting!
-	mIPD = 0.064;
+	mIPD = ovrHmd_GetFloat(hmd, OVR_KEY_IPD,  0.064f);
+	mPosition = Ogre::Vector3::ZERO;
 }
 
 Rift::~Rift()
@@ -213,13 +214,13 @@ void Rift::setCameras( Ogre::Camera* camLeft, Ogre::Camera* camRight )
 	renderTexture->addViewport(camLeft);
 	renderTexture->getViewport(0)->setClearEveryFrame(true);
 	renderTexture->getViewport(0)->setBackgroundColour(Ogre::ColourValue::Black);
-	renderTexture->getViewport(0)->setOverlaysEnabled(false);
+	renderTexture->getViewport(0)->setOverlaysEnabled(true);
 
 	renderTexture = mRightEyeRenderTexture->getBuffer()->getRenderTarget();
 	renderTexture->addViewport(camRight);
 	renderTexture->getViewport(0)->setClearEveryFrame(true);
 	renderTexture->getViewport(0)->setBackgroundColour(Ogre::ColourValue::Black);
-	renderTexture->getViewport(0)->setOverlaysEnabled(false);
+	renderTexture->getViewport(0)->setOverlaysEnabled(true);
 	
 	ovrFovPort fovLeft = hmd->DefaultEyeFov[ovrEye_Left];
 	ovrFovPort fovRight = hmd->DefaultEyeFov[ovrEye_Right];
@@ -254,14 +255,14 @@ bool Rift::update( float dt )
 	frameTiming = ovrHmd_BeginFrameTiming(hmd, 0);
 	ovrTrackingState ts = ovrHmd_GetTrackingState(hmd, frameTiming.ScanoutMidpointSeconds);
 
-	ovrPosef headPose;
+	//ovrPosef headPose;
 
 	if (ts.StatusFlags & (ovrStatus_OrientationTracked | ovrStatus_PositionTracked)) {
 		// The cpp compatibility layer is used to convert ovrPosef to Posef (see OVR_Math.h)
 		Posef pose = ts.HeadPose.ThePose;
-		headPose = pose;
-		float yaw, pitch, roll;
-		pose.Rotation.GetEulerAngles<Axis_Y, Axis_X, Axis_Z>(&yaw, &pitch, &roll);
+		//headPose = pose;
+		//float yaw, pitch, roll;
+		//pose.Rotation.GetEulerAngles<Axis_Y, Axis_X, Axis_Z>(&yaw, &pitch, &roll);
 
 		// Optional: move cursor back to starting position and print values
 		//std::cout << "yaw: "   << RadToDegree(yaw)   << std::endl;
@@ -269,11 +270,13 @@ bool Rift::update( float dt )
 		//std::cout << "roll: "  << RadToDegree(roll)  << std::endl;
 		mOrientation = Ogre::Quaternion( pose.Rotation.w,
 			pose.Rotation.x, pose.Rotation.y, pose.Rotation.z );
+
+		mPosition = Ogre::Vector3( pose.Translation.x, pose.Translation.y, pose.Translation.z );
 	}
 
 	ovr_WaitTillTime( frameTiming.TimewarpPointSeconds );
 
-	for( int eyeNum = 0; eyeNum < 2; eyeNum ++ )
+	/*for( int eyeNum = 0; eyeNum < 2; eyeNum ++ )
 	{
 		ovrMatrix4f tWM[2];
 		ovrHmd_GetEyeTimewarpMatrices( hmd, (ovrEyeType) eyeNum,
@@ -292,9 +295,15 @@ bool Rift::update( float dt )
 						tWM[1].M[2][0], tWM[1].M[2][1], tWM[1].M[2][2], tWM[1].M[2][3],
 						tWM[1].M[3][0], tWM[1].M[3][1], tWM[1].M[3][2], tWM[1].M[3][3]
 					) );
-	}
+	}*/
 
 	ovrHmd_EndFrameTiming(hmd);
 
 	return true;
+}
+
+void Rift::recenterPose()
+{
+	if ( hmd )
+		ovrHmd_RecenterPose( hmd );
 }

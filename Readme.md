@@ -11,12 +11,13 @@ Goal:
 TODO:
 -------------
 
+- [Done] Add orientation tracking
 - [Done] Add distortion
 - [Done] Add command line switch to enable window rotation
+- [Done] Add Position tracking
 - Add Command line switch to control which monitor the screen goes to
 - Add vignette
 - Add time warp
-- Add Position tracking
 - Add License
 
 Note:

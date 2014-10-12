@@ -168,6 +168,7 @@ void App::initRift()
 	} catch( const char* e ) {
 		std::cout << ">> " << e << std::endl;
 		mRift = NULL;
+		mShutdown = true;
 	}
 }
 
@@ -218,7 +219,7 @@ bool App::frameRenderingQueued(const Ogre::FrameEvent& evt)
 	{
 		if ( mRift->update( evt.timeSinceLastFrame ) )
 		{
-			mScene->setRiftPose( mRift->getOrientation() );
+			mScene->setRiftPose( mRift->getOrientation(), mRift->getPosition() );
 		} else {
 			delete mRift;
 			mRift = NULL;

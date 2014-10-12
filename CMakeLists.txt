@@ -50,7 +50,7 @@ message(STATUS ${OIS_LIBRARIES})
 message(STATUS ${OIS_LIBRARYDIR})
 message(STATUS ${OGRE_LIBRARIES})
 
-include_directories( ${OIS_INCLUDE_DIRS}
+include_directories(
 	${OGRE_INCLUDE_DIRS}
 	${OIS_INCLUDE_DIRS}
 	${OGRE_Overlay_INCLUDE_DIRS}
@@ -115,7 +115,7 @@ if (OGRE_RenderSystem_GL_FOUND)
 			"PluginFolder={OGRE_PLUGIN_DIR_REL}" PLUGINS_FILE_MODIFIED
 			${PLUGINS_FILE})
 		string(REGEX REPLACE "PluginFolder=[^\n]*"
-			"PluginFolder={OGRE_PLUGIN_DIR_REL}" PLUGINS_D_FILE_MODIFIED
+			"PluginFolder={OGRE_PLUGIN_DIR_DBG}" PLUGINS_D_FILE_MODIFIED
 			${PLUGINS_D_FILE})
 	endif()
 	file(WRITE ${PROJECT_BINARY_DIR}/plugins.cfg ${PLUGINS_FILE_MODIFIED})

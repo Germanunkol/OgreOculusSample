@@ -22,7 +22,7 @@ class Scene
 		Ogre::Camera* getRightCamera() { return mCamRight; }
 		void setIPD( float IPD );
 
-		void setRiftPose( Ogre::Quaternion orientation );
+		void setRiftPose( Ogre::Quaternion orientation, Ogre::Vector3 pos );
 
 		// Keyboard and mouse events:
 		bool keyPressed(const OIS::KeyEvent&);

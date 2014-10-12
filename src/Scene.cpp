@@ -130,9 +130,10 @@ void Scene::update( float dt )
 // Handle Rift Input:
 //////////////////////////////////////////////////////////////
 
-void Scene::setRiftPose( Ogre::Quaternion orientation )
+void Scene::setRiftPose( Ogre::Quaternion orientation, Ogre::Vector3 pos )
 {
 	mHeadNode->setOrientation( orientation );
+	mHeadNode->setPosition( pos );
 }
 
 void Scene::setIPD( float IPD )

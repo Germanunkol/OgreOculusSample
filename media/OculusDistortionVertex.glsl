@@ -14,6 +14,8 @@ uniform vec2 eyeToSourceUVOffset;
 uniform mat4 eyeRotationStart;
 uniform mat4 eyeRotationEnd;
 
+varying vec4 gl_FrontColor;
+
 vec2 timewarpTexCoord( vec2 texCoord, mat4 rotMat )
 {
 	vec3 transformed =  (rotMat * vec4( texCoord.xy, 1, 1) ).xyz;
@@ -38,7 +40,6 @@ void main(void)
 
 	gl_Position = worldViewProj * vertex;
 
-	gl_Color = colour;
-
+	gl_FrontColor = colour;
 }
 

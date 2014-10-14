@@ -20,8 +20,7 @@ App::App()
 
 	createViewports();
 
-	if ( !NO_RIFT )
-		initRift();
+	initRift();
 
 	//Ogre::WindowEventUtilities::messagePump();
 
@@ -94,7 +93,7 @@ void App::initOgre()
 	// Create the Windows:
 	Ogre::NameValuePairList miscParams;
 	if( NO_RIFT )
-		miscParams["monitorIndex"] = Ogre::StringConverter::toString(1);
+		miscParams["monitorIndex"] = Ogre::StringConverter::toString(0);
 	else
 		miscParams["monitorIndex"] = Ogre::StringConverter::toString(1);
 	miscParams["border "] = "none";

@@ -10,6 +10,10 @@ Goal:
 
 ![Screenshot of Example Scene](Screenshot.png?raw=true)
 
+License:
+-------------
+
+I place this work into public domain wherever possible. In places where this is not allowed, WTFP-LICENSE.txt applies.
 
 TODO:
 -------------
@@ -19,9 +23,9 @@ TODO:
 - [Done] Add command line switch to enable window rotation
 - [Done] Add Position tracking
 - [Canceled - User should decide how he/she wants to do this] Add Command line switch to control which monitor the screen goes to
-- Add vignette
+- [Done] Add vignette
+- [Done] Add License
 - Maybe add time warp
-- Add License
 
 Note:
 -------------

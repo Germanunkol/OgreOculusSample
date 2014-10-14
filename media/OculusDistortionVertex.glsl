@@ -38,5 +38,7 @@ void main(void)
 
 	gl_Position = worldViewProj * vertex;
 
+	gl_Color = colour;
+
 }
 

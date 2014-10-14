@@ -24,6 +24,10 @@ extern "C" {
 			{
 				ROTATE_VIEW = true;
 			}
+			if( arg == "--no-rift" )
+			{
+				NO_RIFT = true;
+			}
 		}
 
 		// Creates the main program and starts rendering. When a framelistener

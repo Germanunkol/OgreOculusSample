@@ -11,6 +11,7 @@ App::App()
 	mShutdown = false;
 	mWindow = NULL;
 	mSmallWindow = NULL;
+	mRift = NULL;
 
 	initOgre();
 	initOIS();
@@ -19,7 +20,8 @@ App::App()
 
 	createViewports();
 
-	initRift();
+	if ( !NO_RIFT )
+		initRift();
 
 	//Ogre::WindowEventUtilities::messagePump();
 
@@ -91,7 +93,10 @@ void App::initOgre()
 
 	// Create the Windows:
 	Ogre::NameValuePairList miscParams;
-	miscParams["monitorIndex"] = Ogre::StringConverter::toString(1);
+	if( NO_RIFT )
+		miscParams["monitorIndex"] = Ogre::StringConverter::toString(1);
+	else
+		miscParams["monitorIndex"] = Ogre::StringConverter::toString(1);
 	miscParams["border "] = "none";
 	
 	Ogre::NameValuePairList miscParamsSmall;
@@ -189,10 +194,13 @@ void App::createViewports()
 	// Each viewport spans half of the screen
 	if(mWindow)
 	{
-		/*mViewportL = mWindow->addViewport(mScene->getLeftCamera(), 0, 0.0, 0.0, 0.5, 1.0 );
-		mViewportL->setBackgroundColour(Ogre::ColourValue(0.15,0.15,0.15));
-		mViewportR = mWindow->addViewport(mScene->getRightCamera(), 1, 0.5, 0.0, 0.5, 1.0 );
-		mViewportR->setBackgroundColour(Ogre::ColourValue(0.15,0.15,0.15));*/
+		if( NO_RIFT )
+		{
+			mViewportL = mWindow->addViewport(mScene->getLeftCamera(), 0, 0.0, 0.0, 0.5, 1.0 );
+			mViewportL->setBackgroundColour(Ogre::ColourValue(0.15,0.15,0.15));
+			mViewportR = mWindow->addViewport(mScene->getRightCamera(), 1, 0.5, 0.0, 0.5, 1.0 );
+			mViewportR->setBackgroundColour(Ogre::ColourValue(0.15,0.15,0.15));
+		}
 		
 		/*if( !ROTATE_VIEW )
 		{

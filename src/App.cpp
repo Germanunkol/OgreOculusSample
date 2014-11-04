@@ -107,7 +107,8 @@ void App::initOgre()
 	else
 		mWindow = mRoot->createRenderWindow("Oculus Rift Liver Visualization", 1080, 1920, true, &miscParams);
 
-	mSmallWindow = mRoot->createRenderWindow("DEBUG Oculus Rift Liver Visualization", 1920*debugWindowSize, 1080*debugWindowSize, false, &miscParamsSmall);   
+	if( DEBUG_WINDOW )
+		mSmallWindow = mRoot->createRenderWindow("DEBUG Oculus Rift Liver Visualization", 1920*debugWindowSize, 1080*debugWindowSize, false, &miscParamsSmall);   
 
 	Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
 }
@@ -211,11 +212,14 @@ void App::createViewports()
 		}*/
 	}
 
-    Ogre::Viewport* debugL = mSmallWindow->addViewport(mScene->getLeftCamera(), 0, 0.0, 0.0, 0.5, 1.0 );
-	debugL->setBackgroundColour(Ogre::ColourValue(0.15,0.15,0.15));
+	if( mSmallWindow )
+	{
+		Ogre::Viewport* debugL = mSmallWindow->addViewport(mScene->getLeftCamera(), 0, 0.0, 0.0, 0.5, 1.0 );
+		debugL->setBackgroundColour(Ogre::ColourValue(0.15,0.15,0.15));
 
-    Ogre::Viewport* debugR = mSmallWindow->addViewport(mScene->getRightCamera(), 1, 0.5, 0.0, 0.5, 1.0 );
-	debugR->setBackgroundColour(Ogre::ColourValue(0.15,0.15,0.15));
+		Ogre::Viewport* debugR = mSmallWindow->addViewport(mScene->getRightCamera(), 1, 0.5, 0.0, 0.5, 1.0 );
+		debugR->setBackgroundColour(Ogre::ColourValue(0.15,0.15,0.15));
+	}
 }
 
 bool App::frameRenderingQueued(const Ogre::FrameEvent& evt) 

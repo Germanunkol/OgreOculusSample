@@ -24,6 +24,7 @@ TODO:
 - [Canceled - User should decide how he/she wants to do this] Add Command line switch to control which monitor the screen goes to
 - [Done] Add vignette
 - [Done] Add License
+- [Donw] Added Linux support
 - Maybe add time warp
 
 Note:
@@ -97,4 +98,4 @@ Input doesn't work!
 
 - If you use OIS, the window needs focus. When using the Rift, the Window is on a seperate screen. Moving your mouse over to the second screen and clicking should give the window focus.
 
-- Linux: If the app starts but shuts down again, make sure that a) the oculusd deamon is running (go into OculusSDK lib and run 'oculusd -d') and b) you're running the program with the dedicated graphics card (if you have multiple)
+- Linux: If the app starts but shuts down again, make sure that a) the oculusd deamon is running (go into OculusSDK lib and run 'oculusd -d') and b) you're running the program with the dedicated graphics card (if you have multiple). If it still doesn't work, try running with the --no-debug command line switch. This will make sure only ONE window is created (the main render window for the oculus rift)

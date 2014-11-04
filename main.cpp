@@ -28,6 +28,10 @@ extern "C" {
 			{
 				NO_RIFT = true;
 			}
+			if( arg == "--no-debug" )
+			{
+				DEBUG_WINDOW = false;
+			}
 		}
 
 		// Creates the main program and starts rendering. When a framelistener

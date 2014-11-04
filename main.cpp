@@ -32,6 +32,15 @@ extern "C" {
 			{
 				DEBUG_WINDOW = false;
 			}
+			if( arg == "--help" || arg == "-h" )
+			{
+				std::cout << "Available Commands:" << std::endl
+					<< "\t--rotate-view\tChanges the orientation of the main render window. Useful when your computer can't rotate the screen." << std::endl
+					<< "\t--no-rift\tFor debugging: disable the Oculus Rift." << std::endl
+					<< "\t--no-debug\tDisables the debug window." << std::endl
+					<< "\t--help,-h\tShow this help message." << std::endl;
+				exit(0);	// show help and then close app.
+			}
 		}
 
 		// Creates the main program and starts rendering. When a framelistener

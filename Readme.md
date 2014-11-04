@@ -62,6 +62,8 @@ When running the example app, you can add the command line switch "--rotate-view
 The app creates a second, smaller "debug" window, because it's annoying if you want to show the program to someone but can't see what they see through the rift.
 If it doesn't work, you might have to change the monitor index - see below.
 
+Use the --help command line switch to get a list of available options.
+
 Explanation:
 -------------
 Almost the entire Rift-Interaction is done using Rift.h and Rift.cpp. Copy those into your project if you want to use them.

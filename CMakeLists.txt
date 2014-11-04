@@ -4,26 +4,30 @@ project(OculusOgreSample)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
-if (NOT DEFINED ENV{OGRE_HOME} AND NOT DEFINED OGRE_HOME)
-	message(SEND_ERROR "Must define OGRE_HOME.")
-else()
-	if (NOT DEFINED OGRE_HOME)
-		set(OGRE_HOME ENV{OGRE_HOME})
+if(WIN32)
+	if (NOT DEFINED ENV{OGRE_HOME} AND NOT DEFINED OGRE_HOME)
+		message(SEND_ERROR "Must define OGRE_HOME.")
+	else()
+		if (NOT DEFINED OGRE_HOME)
+			set(OGRE_HOME ENV{OGRE_HOME})
+		endif()
+		if (NOT DEFINED OGRE_BUILD OR "${OGRE_BUILD}" STREQUAL "")
+			set(OGRE_BUILD ${OGRE_HOME})
+		endif()
+		if( NOT DEFINED OGRE_SOURCE_DIR OR "${OGRE_SOURCE_DIR}" STREQUAL "")
+			set(OGRE_SOURCE_DIR ${OGRE_HOME})
+		endif()
 	endif()
-	if (NOT DEFINED OGRE_BUILD OR "${OGRE_BUILD}" STREQUAL "")
-		set(OGRE_BUILD ${OGRE_HOME})
-	endif()
-	if( NOT DEFINED OGRE_SOURCE_DIR OR "${OGRE_SOURCE_DIR}" STREQUAL "")
-		set(OGRE_SOURCE_DIR ${OGRE_HOME})
-	endif()
-endif()
 
-if (NOT DEFINED ENV{OCULUS_HOME} AND NOT DEFINED OCULUS_HOME)
-	if( NOT EXISTS "${CMAKE_SOURCE_DIR}/OculusSDK")
-		message(SEND_ERROR "Must define OCULUS_HOME, or put the OculusSDK folder into the Project's root directory. Make sure the name of the folder is 'OculusSDK'")
+	if (NOT DEFINED ENV{OCULUS_HOME} AND NOT DEFINED OCULUS_HOME)
+		if( NOT EXISTS "${CMAKE_SOURCE_DIR}/OculusSDK")
+			message(SEND_ERROR "Must define OCULUS_HOME, or put the OculusSDK folder into the Project's root directory. Make sure the name of the folder is 'OculusSDK'")
+		endif()
+	else()
+		set(OCULUS_HOME ENV{OCULUS_HOME})
 	endif()
 else()
-	set(OCULUS_HOME ENV{OCULUS_HOME})
+
 endif()
 
 set(OIS_AND_OGRE_LIB_DIRS
@@ -43,7 +47,6 @@ else()
 	set(OCULUS_SDK_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/OculusSDK )
 endif()
 find_package(OculusSDK REQUIRED)
-
 
 message(STATUS OIS_LIBRARIES)
 message(STATUS ${OIS_LIBRARIES})
@@ -92,6 +95,23 @@ if( WIN32 )
 		winmm.lib
 		ws2_32.lib
 	)
+elseif( UNIX )
+
+		# Where to find UDEV:
+		find_package(UDEV REQUIRED)
+		# Where to find XINERAMA:
+		find_package(Xinerama REQUIRED)
+		find_package(X11 REQUIRED)
+
+	target_link_libraries(OculusOgreSample
+		librt.so
+		libXrandr.so
+		libGL.so
+		libXxf86vm.so
+		libpthread.so
+			${XINERAMA_LIBRARY}  
+			${X11_LIBRARIES}
+	)
 endif()
 
 # Copy files needed by Ogre3D (plugins.cfg and resources.cfg)
@@ -112,10 +132,10 @@ if (OGRE_RenderSystem_GL_FOUND)
 			${PLUGINS_D_FILE})
 	else()
 		string(REGEX REPLACE "PluginFolder=[^\n]*"
-			"PluginFolder={OGRE_PLUGIN_DIR_REL}" PLUGINS_FILE_MODIFIED
+			"PluginFolder=${OGRE_PLUGIN_DIR_REL}" PLUGINS_FILE_MODIFIED
 			${PLUGINS_FILE})
 		string(REGEX REPLACE "PluginFolder=[^\n]*"
-			"PluginFolder={OGRE_PLUGIN_DIR_DBG}" PLUGINS_D_FILE_MODIFIED
+			"PluginFolder=${OGRE_PLUGIN_DIR_DBG}" PLUGINS_D_FILE_MODIFIED
 			${PLUGINS_D_FILE})
 	endif()
 	file(WRITE ${PROJECT_BINARY_DIR}/plugins.cfg ${PLUGINS_FILE_MODIFIED})

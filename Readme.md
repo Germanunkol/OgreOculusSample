@@ -3,7 +3,6 @@ Oculus Rift Rendering in OGRE 3D
 
 Goal:
 -------------
-
 - Rendering to the Oculus Rift using _extended_ mode.
 - Should work with DK2
 - OpenGL only at this point.
@@ -39,7 +38,7 @@ Prerequisites:
 -------------
 
 - Ogre must be installed (Tested with version 1.9)
-- OculusSDK (download from Oculus Rift Website - Tested with version 0.4.2)
+- OculusSDK (download from Oculus Rift Website - Tested with version 0.4.2 and 0.4.3)
 - Install Oculus Runtime (also from Oculus Rift Website)
 
 Building:
@@ -53,6 +52,7 @@ NOTE: I am not an expert in cmake. This means the cmake scripts are probably far
 - WIN: If using boost, set the BOOST_ROOT to C:\local\boost_1_56_0 (or wherever you installed boost)
 - WIN: If using boost, set the BOOST_INCLUDEDIR to C:\local\boost_1_56_0 (or wherever you installed boost)
 - WIN: If using boost, set the BOOST_LIBRARYDIR to C:\local\boost_1_56_0\lib32-msvc-10.0 (or wherever you installed boost)
+- Linux: Make sure to go into the Oculus SDK directory and run 'make', before trying to compile this. Then run 'oculusd -d' to start the oculus deamon.
 
 Usage:
 -------------
@@ -96,3 +96,5 @@ My Overlays are all wrong or don't show!
 Input doesn't work!
 
 - If you use OIS, the window needs focus. When using the Rift, the Window is on a seperate screen. Moving your mouse over to the second screen and clicking should give the window focus.
+
+- Linux: If the app starts but shuts down again, make sure that a) the oculusd deamon is running (go into OculusSDK lib and run 'oculusd -d') and b) you're running the program with the dedicated graphics card (if you have multiple)

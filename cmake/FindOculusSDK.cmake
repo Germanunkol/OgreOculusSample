@@ -28,6 +28,7 @@ SET(OCULUS_SDK_ROOT_DIR
     PATH
     "Root directory to search for OculusSDK")
 
+
 # Look for the header file.
 FIND_PATH(OCULUS_SDK_INCLUDE_DIRS NAMES OVR.h HINTS 
 	${OCULUS_SDK_ROOT_DIR}/LibOVR/Include )

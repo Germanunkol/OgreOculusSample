@@ -163,7 +163,8 @@ Rift::Rift( int ID, Ogre::Root* root, Ogre::RenderWindow* renderWindow, bool rot
 				v.TanEyeAnglesG.y);//*UVScaleOffset[0].y + UVScaleOffset[1].y);
 			manual->textureCoord( v.TanEyeAnglesB.x,//*UVScaleOffset[0].x + UVScaleOffset[1].x,
 				v.TanEyeAnglesB.y);//*UVScaleOffset[0].y + UVScaleOffset[1].y);
-			manual->colour( v.VignetteFactor, v.VignetteFactor, v.VignetteFactor, v.VignetteFactor );
+			float vig = std::max( v.VignetteFactor, (float)0.0 );
+			manual->colour( vig, vig, vig, vig );
 		}
 		for( unsigned int i = 0; i < meshData.IndexCount; i++ )
 		{

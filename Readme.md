@@ -26,6 +26,7 @@ TODO:
 - [Done] Add License
 - [Donw] Added Linux support
 - Maybe add time warp
+- [ToDo] After running cmake: \build ->	build directory (all debug/release and other configuration builds here)
 
 Note:
 -------------
@@ -63,6 +64,16 @@ The app creates a second, smaller "debug" window, because it's annoying if you w
 If it doesn't work, you might have to change the monitor index - see below.
 
 Use the --help command line switch to get a list of available options.
+
+Directory structure
+-------------
+* root 	->	cmakelists.txt (for cmake) + proposed main.cpp + info docs
+\ cfg	->	ogre local configuration files (both debug and release versions)
+\ cmake ->	.cmake files (for cmake)
+\ dist 	->	distribution directory (readme inside)
+\ include->	include directory
+\ media	->	ogre local media files
+\ src 	->	source directory
 
 Explanation:
 -------------

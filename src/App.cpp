@@ -48,11 +48,27 @@ App::~App()
 
 void App::initOgre()
 {
+
+	try
+	{
+		mRoot = new Ogre::Root("cfg/plugins.cfg", "%TEMP%/ogre.cfg", "%TEMP%/ogre.log");
+	}
+	catch ( Ogre::FileNotFoundException &e )
+	{
+		try
+		{
 #ifdef _DEBUG
-	mRoot = new Ogre::Root("plugins_d.cfg");
+			mRoot = new Ogre::Root("../../cfg/plugins_d.cfg", "%TEMP%/ogre.cfg", "%TEMP%/ogre.log");
 #else
-	mRoot = new Ogre::Root("plugins.cfg");
+			mRoot = new Ogre::Root("../../cfg/plugins.cfg", "%TEMP%/ogre.cfg", "%TEMP%/ogre.log");
 #endif
+		}
+		catch ( Ogre::FileNotFoundException &e )
+		{
+			throw e;
+		}
+	}
+
 	mRoot->addFrameListener(this);
 
 	// Load up resources according to resources.cfg:

@@ -2,9 +2,8 @@
 #define RIFT_H
 
 #include <iostream>
-
 #include "OVR.h"
-#include "Kernel/OVR_Math.h"
+#include "Extras\OVR_Math.h"
 #include "OGRE/Ogre.h"
 using namespace OVR;
 

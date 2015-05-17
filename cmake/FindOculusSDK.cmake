@@ -20,23 +20,36 @@
 #  OCULUS_SDK_VERSION      - Version of the OculusSDK if found
 
 IF (DEFINED ENV{OCULUS_SDK_ROOT_DIR})
+	message("Environment variable OCULUS_SDK_ROOT_DIR found. This will be the used as OculusSDK root dir.")
     SET(OCULUS_SDK_ROOT_DIR "$ENV{OCULUS_SDK_ROOT_DIR}")
+#ELSEIF(DEFINED ENV{OCULUS_HOME})
+#	message("Environment variable OCULUS_HOME found. This will be the used as OculusSDK root dir.")
+#    SET(OCULUS_SDK_ROOT_DIR "$ENV{OCULUS_HOME}")
+ELSEIF (DEFINED OCULUS_SDK_ROOT_DIR)
+	SET(OCULUS_SDK_ROOT_DIR
+	    "${OCULUS_SDK_ROOT_DIR}"
+	    CACHE
+	    PATH
+	    "Root directory to search for OculusSDK set to ${OCULUS_SDK_ROOT_DIR}")
+ELSE()
+	MESSAGE(FATAL_ERROR "No OCULUS_SDK_ROOT_DIR environment variable set or cmake variable OCULUS_SDK_ROOT_DIR set.")
 ENDIF()
-SET(OCULUS_SDK_ROOT_DIR
-    "${OCULUS_SDK_ROOT_DIR}"
-    CACHE
-    PATH
-    "Root directory to search for OculusSDK")
-
 
 # Look for the header file.
-FIND_PATH(OCULUS_SDK_INCLUDE_DIRS NAMES OVR.h HINTS 
+FIND_PATH(OCULUS_SDK_INCLUDE_DIR NAMES OVR.h HINTS			# useless??
 	${OCULUS_SDK_ROOT_DIR}/LibOVR/Include )
 
-FIND_PATH(OCULUS_SDK_CAPI_DIR NAMES OVR_CAPI.h HINTS 
+FIND_PATH(OCULUS_SDK_CAPI_DIR NAMES OVR_CAPI.h HINTS 		# useless??
 	${OCULUS_SDK_ROOT_DIR}/LibOVR/Src )
 
-set( OCULUS_SDK_INCLUDE_DIRS "${OCULUS_SDK_INCLUDE_DIRS};${OCULUS_SDK_CAPI_DIR}" )
+FIND_PATH(OCULUS_SDK_KERNEL_DIR NAMES OVR_CAPI.h HINTS 		# useless??
+	${OCULUS_SDK_ROOT_DIR}/LibOVRKernel/Src )
+
+set(OCULUS_SDK_INCLUDE_DIR ${OCULUS_SDK_ROOT_DIR}/LibOVR/Include)
+set(OCULUS_SDK_CAPI_DIR ${OCULUS_SDK_ROOT_DIR}/LibOVR/Src)
+set(OCULUS_SDK_KERNEL_DIR ${OCULUS_SDK_ROOT_DIR}/LibOVRKernel/Src)
+
+set( OCULUS_SDK_INCLUDE_DIRS "${OCULUS_SDK_INCLUDE_DIR};${OCULUS_SDK_CAPI_DIR};${OCULUS_SDK_KERNEL_DIR}" )
 
 # Determine architecture
 IF(CMAKE_SIZEOF_VOID_P MATCHES "8")
@@ -100,21 +113,33 @@ IF(EXISTS "${_OCULUS_SDK_LICENSE_FILE}")
 ENDIF()
 
 # Look for the library.
-FIND_LIBRARY(OCULUS_SDK_LIBRARY NAMES libovr libovr64 ovr HINTS ${OCULUS_SDK_ROOT_DIR} 
-                                                      ${OCULUS_SDK_ROOT_DIR}/LibOVR/Lib/${_OCULUS_SDK_LIB_ARCH}/${_OCULUS_MSVC_DIR}
+FIND_LIBRARY(OCULUS_SDK_LIBRARY NAMES libovr libovr64 libovrkernel ovr HINTS ${OCULUS_SDK_ROOT_DIR} 
+                                                      ${OCULUS_SDK_ROOT_DIR}/LibOVR/Lib/Windows/${_OCULUS_SDK_LIB_ARCH}/Release/${_OCULUS_MSVC_DIR}
                                                       ${OCULUS_SDK_ROOT_DIR}/LibOVR/Lib/Mac/Release
                                                       ${OCULUS_SDK_ROOT_DIR}/LibOVR/Lib/Linux/Release/${_OCULUS_SDK_LIB_ARCH}
+                                                      ${OCULUS_SDK_ROOT_DIR}/LibOVRKernel/Lib/Windows/${_OCULUS_SDK_LIB_ARCH}/Release/${_OCULUS_MSVC_DIR}
+                                                      ${OCULUS_SDK_ROOT_DIR}/LibOVRKernel/Lib/Mac/Release
+                                                      ${OCULUS_SDK_ROOT_DIR}/LibOVRKernel/Lib/Linux/Release/${_OCULUS_SDK_LIB_ARCH}
                                                     )
+
+#set(OCULUS_SDK_LIBRARY C:/OculusSDK/LibOVR/Lib/Windows/x64/Release/VS2013/LibOVR.lib)
 
 # This will find release lib on Linux if no debug is available - on Linux this is no problem and avoids 
 # having to compile in debug when not needed
-FIND_LIBRARY(OCULUS_SDK_LIBRARY_DEBUG NAMES libovr${CMAKE_DEBUG_POSTFIX} libovr64${CMAKE_DEBUG_POSTFIX} ovr${CMAKE_DEBUG_POSTFIX} ovr libovr HINTS 
-                                                      ${OCULUS_SDK_ROOT_DIR}/LibOVR/Lib/${_OCULUS_SDK_LIB_ARCH}/${_OCULUS_MSVC_DIR}
+FIND_LIBRARY(OCULUS_SDK_LIBRARY_DEBUG NAMES libovr${CMAKE_DEBUG_POSTFIX} libovr64${CMAKE_DEBUG_POSTFIX} ovr${CMAKE_DEBUG_POSTFIX} ovr libovr libovrkernel HINTS 
+                                                      ${OCULUS_SDK_ROOT_DIR}/LibOVR/Lib/Windows/${_OCULUS_SDK_LIB_ARCH}/Debug/${_OCULUS_MSVC_DIR}
                                                       ${OCULUS_SDK_ROOT_DIR}/LibOVR/Lib/Mac/Debug
                                                       ${OCULUS_SDK_ROOT_DIR}/LibOVR/Lib/Mac/Release
                                                       ${OCULUS_SDK_ROOT_DIR}/LibOVR/Lib/Linux/Debug/${_OCULUS_SDK_LIB_ARCH}
                                                       ${OCULUS_SDK_ROOT_DIR}/LibOVR/Lib/Linux/Release/${_OCULUS_SDK_LIB_ARCH}
+                                                      ${OCULUS_SDK_ROOT_DIR}/LibOVRKernel/Lib/Windows/${_OCULUS_SDK_LIB_ARCH}/Debug/${_OCULUS_MSVC_DIR}
+                                                      ${OCULUS_SDK_ROOT_DIR}/LibOVRKernel/Lib/Mac/Debug
+                                                      ${OCULUS_SDK_ROOT_DIR}/LibOVRKernel/Lib/Mac/Release
+                                                      ${OCULUS_SDK_ROOT_DIR}/LibOVRKernel/Lib/Linux/Debug/${_OCULUS_SDK_LIB_ARCH}
+                                                      ${OCULUS_SDK_ROOT_DIR}/LibOVRKernel/Lib/Linux/Release/${_OCULUS_SDK_LIB_ARCH}
                                                     )
+
+#set(OCULUS_SDK_LIBRARY_DEBUG C:/OculusSDK/LibOVR/Lib/Windows/x64/Debug/VS2013/LibOVR.lib)
     
 MARK_AS_ADVANCED(OCULUS_SDK_LIBRARY)
 MARK_AS_ADVANCED(OCULUS_SDK_LIBRARY_DEBUG)
@@ -123,6 +148,9 @@ SET(OCULUS_SDK_LIBRARIES optimized ${OCULUS_SDK_LIBRARY} debug ${OCULUS_SDK_LIBR
 
 # handle the QUIETLY and REQUIRED arguments and set OCULUS_SDK_FOUND to TRUE if
 # all listed variables are TRUE
+
+#message("LIBRERIE: ${OCULUS_SDK_LIBRARIES}")
+
 INCLUDE(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(OculusSDK DEFAULT_MSG OCULUS_SDK_LIBRARIES OCULUS_SDK_INCLUDE_DIRS)
 

@@ -26,6 +26,7 @@ TODO:
 - [Done] Add License
 - [Donw] Added Linux support
 - Maybe add time warp
+- [ToDo] After running cmake: \build ->	build directory (all debug/release and other configuration builds here)
 
 Note:
 -------------
@@ -46,14 +47,38 @@ Building:
 -------------
 
 NOTE: I am not an expert in cmake. This means the cmake scripts are probably far from perfect - I'll happily accept pull request which make them better!
-- Use cmake to build in directory of choice.
-- WIN: Create variable OGRE_HOME and set to the place where you've installed or built OGRE
-- Put the OculusSDK folder into the source folder, or set OCULUS_HOME to point to the OculusSDK folder.
+- Install cmake
+- Setup OgreSDK
+	- WIN:
+		- create env variable OGRE_HOME and set to the place where you've installed or built OGRE
+		- add to env PATH the two folders containing Release and Debug libs (ex. OIS.dll and OIS_d.dll)
+		  This avoids to copy .dlls needed at startup by ogre into your project (until running install)
+	- UNIX: do nothing, script will find Ogre folder/libs for you
+- Setup OculusSDK
+	- WIN: Put the OculusSDK folder into the source folder, or set OCULUS_HOME to point to the OculusSDK folder
+	- UNIX: Make sure to go into the Oculus SDK directory and run 'make', before trying to compile this.
+			Then run 'oculusd -d' to start the oculus deamon
 - If your version of OGRE was built with boost (i.e. threadding was enabled) then you'll also need boost (get binaries online). Make sure to install a version for the Compiler you're using (for example: Visual C++ 2010 Express).
-- WIN: If using boost, set the BOOST_ROOT to C:\local\boost_1_56_0 (or wherever you installed boost)
-- WIN: If using boost, set the BOOST_INCLUDEDIR to C:\local\boost_1_56_0 (or wherever you installed boost)
-- WIN: If using boost, set the BOOST_LIBRARYDIR to C:\local\boost_1_56_0\lib32-msvc-10.0 (or wherever you installed boost)
-- Linux: Make sure to go into the Oculus SDK directory and run 'make', before trying to compile this. Then run 'oculusd -d' to start the oculus deamon.
+	- WIN: if using boost,
+		- set env var BOOST_ROOT to C:\local\boost_1_56_0 (or wherever you installed boost)
+		- set env var BOOST_INCLUDEDIR to C:\local\boost_1_56_0 (or wherever you installed boost)
+		- set env var BOOST_LIBRARYDIR to C:\local\boost_1_56_0\lib32-msvc-10.0 (or wherever you installed boost)
+
+Installing:
+--------------
+
+See README in /dist
+
+How Ogre runs under Windows:
+--------------
+
+When launching the application, Ogre first looks for runtime .dll (such as OIS and others defined in CMakeLists.txt in target_link_libraries.). In windows, any application looks for these .dlls in directories set in PATH environment variable. This does not happen wih OculusSDK since in this project static libraries are used (.lib). Alternatively, these .dlls should be copied in the same directory where the executable resides. This will be done by cmake only with INSTALL command, in /dist folder, to make application portable.
+
+Only then, plugins can be hot linked. This is when plugins.cfg is parsed and other .dlls are loaded from plugin path directory defined in it.
+Similarly, all media files are searched from directories defined in resources.cfg
+
+When debugging/compiling application, application looks for cfg files in /cfg, for media files in OgreSDK default media folder and /media folder (where you should put personal media files) and for .dlls in OgreSDK (as defined in PATH variable).
+When installing application, all these files are COPIED in paths relative to /dist, thus creating a portable version that can be distributed more easily. Don't modify these files! Update the original ones instead and then install again!
 
 Usage:
 -------------
@@ -63,6 +88,16 @@ The app creates a second, smaller "debug" window, because it's annoying if you w
 If it doesn't work, you might have to change the monitor index - see below.
 
 Use the --help command line switch to get a list of available options.
+
+Directory structure
+-------------
+* root 	->	cmakelists.txt (for cmake) + proposed main.cpp + info docs
+\ cfg	->	ogre local configuration files (both debug and release versions)
+\ cmake ->	.cmake files (for cmake)
+\ dist 	->	distribution directory (readme inside)
+\ include->	include directory
+\ media	->	ogre local media files
+\ src 	->	source directory
 
 Explanation:
 -------------

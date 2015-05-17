@@ -3,6 +3,7 @@
 // Oculus Rift.
 // ---------------------------------------------------------------------
 // August 2014, Micha Pfeiffer
+// May 2015, Dario Facchini
 // Couples Ogre3D and the Oculus Rift SDK to render Meshes in a VR setting
 //
 
@@ -20,14 +21,20 @@ extern "C" {
 		for ( int i = 0; i < argc; i++ )
 		{
 			std::string arg( argv[i] );
+
+			// This flag triggers the DK1/DK2 view rotation (set this up as you need it)
 			if( arg == "--rotate-view" )
 			{
 				ROTATE_VIEW = true;
 			}
+			// This flag enables the program to run even without a physical device connected
+			/*	REMOVED: Rift class is now able to detect if there is a compatible headset connected!
 			if( arg == "--no-rift" )
 			{
 				NO_RIFT = true;
 			}
+			*/
+			// This flag disables the debug window (simply a window where stereo virtual cameras are showed before going through Rift class)
 			if( arg == "--no-debug" )
 			{
 				DEBUG_WINDOW = false;

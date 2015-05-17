@@ -1,6 +1,7 @@
 #include "Rift.h"
 
 bool Rift::isInitialized = false;
+unsigned short int Rift::ovr_Users = 0;
 
 //////////////////////////////////////////
 // Static members for handling the API:
@@ -12,10 +13,12 @@ void Rift::init()
 		ovr_Initialize();
 		isInitialized = true;
 	}
+	ovr_Users++;
 }
 void Rift::shutdown()
 {
-	if( isInitialized )
+	ovr_Users--;
+	if( ovr_Users == 0 && isInitialized )
 	{
 		ovr_Shutdown();
 		isInitialized = false;
@@ -26,42 +29,118 @@ void Rift::shutdown()
 // Per-Device methods (non static):
 /////////////////////////////////////////
 
-Rift::Rift( int ID, Ogre::Root* root, Ogre::RenderWindow* renderWindow, bool rotateView )
+
+Rift::Rift(const unsigned int ID, Ogre::Root* const root, Ogre::RenderWindow* &renderWindow, const bool rotateView)
 {
-	if( ! isInitialized ) throw( "Need to initialize first. Call Rift::init()!" );
-	std::cout << "Creating Rift (ID: " << ID << ")" << std::endl;
+	if (root == nullptr) throw std::invalid_argument("'root' is null. Rift instance not created.");
 
-	mSceneMgr = root->createSceneManager(Ogre::ST_GENERIC);
-	mSceneMgr->setAmbientLight( Ogre::ColourValue( 0.5, 0.5, 0.5 ) );
+	// Init OVR lib (if I am the first created)
+	Rift::init();
 
-	mRenderWindow = renderWindow;
 
+	// ---------------------------------
+	// Try to locate physical Rift device
 	hmd = NULL;
-
-	hmd = ovrHmd_Create( ID );
-    if( !hmd )
+	std::cout << "Creating Rift (ID: " << ID << ")" << std::endl;
+	hmd = ovrHmd_Create(ID);
+	if (!hmd)
 	{
+		// No Rift detected: no sensor data, but Oculus window will be displayed anyway
 		hmd = NULL;
-		throw( "Could not connect to Rift." );
+		std::cout << "Oculus Rift NOT found.\nSimulating Oculus DK2..." << std::endl;
+		
+		hmd = ovrHmd_CreateDebug(ovrHmd_DK2);
+		if (!hmd)
+		{
+			Rift::shutdown();
+			throw std::ios_base::failure("Unable to initialize Rift class.");
+		}
+		simulationMode = true;
+		std::cout<<"Simulation enabled: a window will show a dummy Oculus DK2 output." << std::endl;
+
 	}
-
-	std::cout << "Oculus Rift found." << std::endl;
-	std::cout << "\tProduct Name: " << hmd->ProductName << std::endl;
-	std::cout << "\tProduct ID: " << hmd->ProductId << std::endl;
-	std::cout << "\tFirmware: " << hmd->FirmwareMajor << "." << hmd->FirmwareMinor << std::endl;
-	std::cout << "\tResolution: " << hmd->Resolution.w << "x" << hmd->Resolution.h << std::endl;
-
-	if (!ovrHmd_ConfigureTracking(hmd, ovrTrackingCap_Orientation | ovrTrackingCap_MagYawCorrection | ovrTrackingCap_Position, 0) )
+	else
 	{
-		ovrHmd_Destroy(hmd);
-		throw ("\t\tThis Rift does not support the features needed by the application.");
+		// Rift detected
+		simulationMode = false;
+		std::cout << "Oculus Rift found." << std::endl;
+		std::cout << "\tProduct Name: " << hmd->ProductName << std::endl;
+		std::cout << "\tProduct ID: " << hmd->ProductId << std::endl;
+		std::cout << "\tFirmware: " << hmd->FirmwareMajor << "." << hmd->FirmwareMinor << std::endl;
+		std::cout << "\tResolution: " << hmd->Resolution.w << "x" << hmd->Resolution.h << std::endl;
+		std::cout << "Oculus Rift found." << std::endl;
+
+		// If Rift not supported, throw exception
+		if (!ovrHmd_ConfigureTracking(hmd, ovrTrackingCap_Orientation | ovrTrackingCap_MagYawCorrection | ovrTrackingCap_Position, 0))
+		{
+			ovrHmd_Destroy(hmd);
+			Rift::shutdown();
+			throw std::ios_base::failure("\tThis Rift does not support the features needed by the application.");
+		}
 	}
+
+
+	// -----------------------------------
+	createRiftDisplayScene(root, rotateView);
+
+
+	// -----------------------------------
+	// Create Oculus render window, if needed
+	if (renderWindow == NULL)
+	{
+		// no window defined by the user: create it and save to the user
+		createRiftDisplayWindow(root);
+		renderWindow = mRenderWindow;
+	}
+	else
+	{
+		// window already available: save it
+		mRenderWindow = renderWindow;
+	}
+	// Link mCamera (inner scene Oculus camera) to Oculus rendering window
+	mViewport = mRenderWindow->addViewport(mCamera);
+	mViewport->setBackgroundColour(Ogre::ColourValue::Black);
+	mViewport->setOverlaysEnabled(true);
+
+}
+
+void Rift::createRiftDisplayWindow(Ogre::Root* const root)
+{
+
+	//Setup Oculus rendering window options
+	Ogre::NameValuePairList miscParams;
+	if (simulationMode)
+	{
+		// No rift: creating standard window
+		miscParams["monitorIndex"] = Ogre::StringConverter::toString(0);
+	}
+	else
+	{
+		// Yes rift: creating full screen window in secondary screen (extended mode)
+		// Options Oculus rendering window
+		miscParams["monitorIndex"] = Ogre::StringConverter::toString(1);
+		miscParams["border "] = "none";
+	}
+
+	// Creating Oculus rendering window
+	if (true)
+		mRenderWindow = root->createRenderWindow("Oculus Rift Liver Visualization", 1280, 800, !simulationMode, &miscParams);
+		//mWindow = mRoot->createRenderWindow("Oculus Rift Liver Visualization", 1920*0.5, 1080*0.5, false, &miscParams);
+	else
+		mRenderWindow = root->createRenderWindow("Oculus Rift Liver Visualization", 1080, 1920, !simulationMode, &miscParams);
+
+}
+
+void Rift::createRiftDisplayScene(Ogre::Root* const root, const bool rotateView)
+{
+	mSceneMgr = root->createSceneManager(Ogre::ST_GENERIC);
+	mSceneMgr->setAmbientLight(Ogre::ColourValue(0.5, 0.5, 0.5));
 
 	// Configure Render Textures:
-	Sizei recommendedTex0Size = ovrHmd_GetFovTextureSize( hmd, ovrEye_Left,
-		hmd->DefaultEyeFov[0], 1.0f );
-	Sizei recommendedTex1Size = ovrHmd_GetFovTextureSize( hmd, ovrEye_Right,
-		hmd->DefaultEyeFov[1], 1.0f );
+	Sizei recommendedTex0Size = ovrHmd_GetFovTextureSize(hmd, ovrEye_Left,
+		hmd->DefaultEyeFov[0], 1.0f);
+	Sizei recommendedTex1Size = ovrHmd_GetFovTextureSize(hmd, ovrEye_Right,
+		hmd->DefaultEyeFov[1], 1.0f);
 
 	/*Sizei renderTargetSize;
 	renderTargetSize.w = recommendedTex0Size.w + recommendedTex1Size.w;
@@ -70,23 +149,23 @@ Rift::Rift( int ID, Ogre::Root* root, Ogre::RenderWindow* renderWindow, bool rot
 	mLeftEyeRenderTexture = Ogre::TextureManager::getSingleton().createManual(
 		"RiftRenderTextureLeft", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
 		Ogre::TEX_TYPE_2D, recommendedTex0Size.w, recommendedTex0Size.h, 0, Ogre::PF_R8G8B8,
-		Ogre::TU_RENDERTARGET );
+		Ogre::TU_RENDERTARGET);
 	mRightEyeRenderTexture = Ogre::TextureManager::getSingleton().createManual(
 		"RiftRenderTextureRight", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
 		Ogre::TEX_TYPE_2D, recommendedTex1Size.w, recommendedTex1Size.h, 0, Ogre::PF_R8G8B8,
-		Ogre::TU_RENDERTARGET );
+		Ogre::TU_RENDERTARGET);
 
 	// Assign the textures to the eyes used later:
-	mMatLeft = Ogre::MaterialManager::getSingleton().getByName( "Oculus/LeftEye" );
-	mMatLeft->getTechnique(0)->getPass(0)->getTextureUnitState(0)->setTexture( mLeftEyeRenderTexture );
-	mMatRight = Ogre::MaterialManager::getSingleton().getByName( "Oculus/RightEye" );
-	mMatRight->getTechnique(0)->getPass(0)->getTextureUnitState(0)->setTexture( mRightEyeRenderTexture );
+	mMatLeft = Ogre::MaterialManager::getSingleton().getByName("Oculus/LeftEye");
+	mMatLeft->getTechnique(0)->getPass(0)->getTextureUnitState(0)->setTexture(mLeftEyeRenderTexture);
+	mMatRight = Ogre::MaterialManager::getSingleton().getByName("Oculus/RightEye");
+	mMatRight->getTechnique(0)->getPass(0)->getTextureUnitState(0)->setTexture(mRightEyeRenderTexture);
 
 	ovrEyeRenderDesc eyeRenderDesc[2];
-	
-	eyeRenderDesc[0] = ovrHmd_GetRenderDesc( hmd, ovrEye_Left, hmd->DefaultEyeFov[0] );
-	eyeRenderDesc[1] = ovrHmd_GetRenderDesc( hmd, ovrEye_Right, hmd->DefaultEyeFov[1] );
-	
+
+	eyeRenderDesc[0] = ovrHmd_GetRenderDesc(hmd, ovrEye_Left, hmd->DefaultEyeFov[0]);
+	eyeRenderDesc[1] = ovrHmd_GetRenderDesc(hmd, ovrEye_Right, hmd->DefaultEyeFov[1]);
+
 	std::cout << eyeRenderDesc[0].Fov.DownTan << std::endl;
 	std::cout << eyeRenderDesc[0].Eye << std::endl;
 
@@ -104,42 +183,44 @@ Rift::Rift( int ID, Ogre::Root* root, Ogre::RenderWindow* renderWindow, bool rot
 	Ogre::SceneNode* meshNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
 
 	// Create the Distortion Meshes:
-	for ( int eyeNum = 0; eyeNum < 2; eyeNum ++ )
+	for (int eyeNum = 0; eyeNum < 2; eyeNum++)
 	{
 		ovrDistortionMesh meshData;
-		ovrHmd_CreateDistortionMesh( hmd,
+		ovrHmd_CreateDistortionMesh(hmd,
 			eyeRenderDesc[eyeNum].Eye,
 			eyeRenderDesc[eyeNum].Fov,
 			0,
-			&meshData );
+			&meshData);
 
 		Ogre::GpuProgramParametersSharedPtr params;
-		
-		if( eyeNum == 0 )
+
+		if (eyeNum == 0)
 		{
-			ovrHmd_GetRenderScaleAndOffset( eyeRenderDesc[eyeNum].Fov,
+			ovrHmd_GetRenderScaleAndOffset(eyeRenderDesc[eyeNum].Fov,
 				recommendedTex0Size, viewports[eyeNum],
 				UVScaleOffset);
 			params = mMatLeft->getTechnique(0)->getPass(0)->getVertexProgramParameters();
-		} else {
-			ovrHmd_GetRenderScaleAndOffset( eyeRenderDesc[eyeNum].Fov,
+		}
+		else
+		{
+			ovrHmd_GetRenderScaleAndOffset(eyeRenderDesc[eyeNum].Fov,
 				recommendedTex1Size, viewports[eyeNum],
 				UVScaleOffset);
 			params = mMatRight->getTechnique(0)->getPass(0)->getVertexProgramParameters();
 		}
 
-		params->setNamedConstant( "eyeToSourceUVScale",
-				Ogre::Vector2( UVScaleOffset[0].x, UVScaleOffset[0].y ) );
-		params->setNamedConstant( "eyeToSourceUVOffset",
-				Ogre::Vector2( UVScaleOffset[1].x, UVScaleOffset[1].y ) );
-		
+		params->setNamedConstant("eyeToSourceUVScale",
+			Ogre::Vector2(UVScaleOffset[0].x, UVScaleOffset[0].y));
+		params->setNamedConstant("eyeToSourceUVOffset",
+			Ogre::Vector2(UVScaleOffset[1].x, UVScaleOffset[1].y));
+
 		std::cout << "UVScaleOffset[0]: " << UVScaleOffset[0].x << ", " << UVScaleOffset[0].y << std::endl;
 		std::cout << "UVScaleOffset[1]: " << UVScaleOffset[1].x << ", " << UVScaleOffset[1].y << std::endl;
 
 		// create ManualObject
 		// TODO: Destroy the manual objects!!
 		Ogre::ManualObject* manual;
-		if( eyeNum == 0 )
+		if (eyeNum == 0)
 		{
 			manual = mSceneMgr->createManualObject("RiftRenderObjectLeft");
 			manual->begin("Oculus/LeftEye", Ogre::RenderOperation::OT_TRIANGLE_LIST);
@@ -151,63 +232,59 @@ Rift::Rift( int ID, Ogre::Root* root, Ogre::RenderWindow* renderWindow, bool rot
 			manual->begin("Oculus/RightEye", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 			//manual->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 		}
- 
-		for( unsigned int i = 0; i < meshData.VertexCount; i++ )
+
+		for (unsigned int i = 0; i < meshData.VertexCount; i++)
 		{
 			ovrDistortionVertex v = meshData.pVertexData[i];
-			manual->position( v.ScreenPosNDC.x,
-				v.ScreenPosNDC.y, 0 );
-			manual->textureCoord( v.TanEyeAnglesR.x,//*UVScaleOffset[0].x + UVScaleOffset[1].x,
+			manual->position(v.ScreenPosNDC.x,
+				v.ScreenPosNDC.y, 0);
+			manual->textureCoord(v.TanEyeAnglesR.x,//*UVScaleOffset[0].x + UVScaleOffset[1].x,
 				v.TanEyeAnglesR.y);//*UVScaleOffset[0].y + UVScaleOffset[1].y);
-			manual->textureCoord( v.TanEyeAnglesG.x,//*UVScaleOffset[0].x + UVScaleOffset[1].x,
+			manual->textureCoord(v.TanEyeAnglesG.x,//*UVScaleOffset[0].x + UVScaleOffset[1].x,
 				v.TanEyeAnglesG.y);//*UVScaleOffset[0].y + UVScaleOffset[1].y);
-			manual->textureCoord( v.TanEyeAnglesB.x,//*UVScaleOffset[0].x + UVScaleOffset[1].x,
+			manual->textureCoord(v.TanEyeAnglesB.x,//*UVScaleOffset[0].x + UVScaleOffset[1].x,
 				v.TanEyeAnglesB.y);//*UVScaleOffset[0].y + UVScaleOffset[1].y);
-			float vig = std::max( v.VignetteFactor, (float)0.0 );
-			manual->colour( vig, vig, vig, vig );
+			float vig = std::max(v.VignetteFactor, (float)0.0);
+			manual->colour(vig, vig, vig, vig);
 		}
-		for( unsigned int i = 0; i < meshData.IndexCount; i++ )
+		for (unsigned int i = 0; i < meshData.IndexCount; i++)
 		{
-			manual->index( meshData.pIndexData[i] );
+			manual->index(meshData.pIndexData[i]);
 		}
- 
+
 		// tell Ogre, your definition has finished
 		manual->end();
 
-		ovrHmd_DestroyDistortionMesh( &meshData );
+		ovrHmd_DestroyDistortionMesh(&meshData);
 
-		meshNode->attachObject( manual );
+		meshNode->attachObject(manual);
 	}
 
-	// Create a camera in the (new, external) scene so the mesh can be rendered onto it:
+	// Create a camera in the Oculus inner scene so the two meshes can be rendered onto it:
 	mCamera = mSceneMgr->createCamera("OculusRiftExternalCamera");
-	mCamera->setFarClipDistance( 50 );
-	mCamera->setNearClipDistance( 0.001 );
-	mCamera->setProjectionType( Ogre::PT_ORTHOGRAPHIC );
-	mCamera->setOrthoWindow( 2, 2 );
-
-	if( rotateView )
+	mCamera->setFarClipDistance(50);
+	mCamera->setNearClipDistance(0.001);
+	mCamera->setProjectionType(Ogre::PT_ORTHOGRAPHIC);
+	mCamera->setOrthoWindow(2, 2);
+	if (rotateView)
 	{
-		mCamera->roll( Ogre::Degree( -90 ) );
+		mCamera->roll(Ogre::Degree(-90));
 	}
-
-	mSceneMgr->getRootSceneNode()->attachObject( mCamera );
-
-	meshNode->setPosition( 0, 0, -1 );
-	meshNode->setScale( 1, 1, -1 );
-
-	mViewport = mRenderWindow->addViewport( mCamera );
-	mViewport->setBackgroundColour(Ogre::ColourValue::Black);
-	mViewport->setOverlaysEnabled(true);
+	mSceneMgr->getRootSceneNode()->attachObject(mCamera);
+	meshNode->setPosition(0, 0, -1);
+	meshNode->setScale(1, 1, -1);
 
 	// Set up IPD in meters:
-	mIPD = ovrHmd_GetFloat(hmd, OVR_KEY_IPD,  0.064f);
+	mIPD = ovrHmd_GetFloat(hmd, OVR_KEY_IPD, 0.064f);
 	mPosition = Ogre::Vector3::ZERO;
 }
 
 Rift::~Rift()
 {
 	if(hmd) ovrHmd_Destroy(hmd);
+	
+	// Shutdown OVR lib (if I am the last Rift object to be destroyed)
+	Rift::shutdown();
 }
 
 // Takes the two cameras created in the scene and creates Viewports in the correct render textures:

@@ -119,7 +119,11 @@ if (OGRE_PREFIX_SOURCE AND OGRE_PREFIX_BUILD)
   endforeach(dir)
   foreach(dir ${OGRE_PREFIX_BUILD})
     set(OGRE_INC_SEARCH_PATH ${dir}/include ${OGRE_INC_SEARCH_PATH})
-    set(OGRE_LIB_SEARCH_PATH ${dir}/lib ${OGRE_LIB_SEARCH_PATH})
+    if(APPLE AND NOT OGRE_BUILD_PLATFORM_APPLE_IOS)
+        set(OGRE_LIB_SEARCH_PATH ${dir}/lib/macosx ${OGRE_LIB_SEARCH_PATH})
+    else()
+        set(OGRE_LIB_SEARCH_PATH ${dir}/lib ${OGRE_LIB_SEARCH_PATH})
+    endif()
 
     if (OGRE_BUILD_PLATFORM_APPLE_IOS)
         set(OGRE_LIB_SEARCH_PATH ${dir}/lib/iphoneos ${dir}/lib/iphonesimulator ${OGRE_LIB_SEARCH_PATH})
@@ -127,6 +131,10 @@ if (OGRE_PREFIX_SOURCE AND OGRE_PREFIX_BUILD)
 
     set(OGRE_BIN_SEARCH_PATH ${dir}/bin ${OGRE_BIN_SEARCH_PATH})
     set(OGRE_BIN_SEARCH_PATH ${dir}/Samples/Common/bin ${OGRE_BIN_SEARCH_PATH})
+
+    if(APPLE AND NOT OGRE_BUILD_PLATFORM_APPLE_IOS)
+      set(OGRE_BIN_SEARCH_PATH ${dir}/bin/macosx ${OGRE_BIN_SEARCH_PATH})
+    endif()
   endforeach(dir)
   
   if (OGRE_PREFIX_DEPENDENCIES_DIR)
@@ -146,7 +154,7 @@ set(OGRE_COMPONENTS Paging Terrain Volume Overlay
   RenderSystem_Direct3D11 RenderSystem_Direct3D9 RenderSystem_GL RenderSystem_GL3Plus RenderSystem_GLES RenderSystem_GLES2)
 set(OGRE_RESET_VARS 
   OGRE_CONFIG_INCLUDE_DIR OGRE_INCLUDE_DIR 
-  OGRE_LIBRARY_FWK OGRE_LIBRARY_REL OGRE_LIBRARY_DBG
+  OGRE_FRAMEWORK_INCLUDES OGRE_FRAMEWORK_PATH OGRE_LIBRARY_FWK OGRE_LIBRARY_REL OGRE_LIBRARY_DBG
   OGRE_PLUGIN_DIR_DBG OGRE_PLUGIN_DIR_REL OGRE_MEDIA_DIR)
 foreach (comp ${OGRE_COMPONENTS})
   set(OGRE_RESET_VARS ${OGRE_RESET_VARS}
@@ -161,8 +169,16 @@ if(NOT OGRE_STATIC)
 	# try to locate Ogre via pkg-config
 	use_pkgconfig(OGRE_PKGC "OGRE${OGRE_LIB_SUFFIX}")
 
-	# try to find framework on OSX
-	findpkg_framework(OGRE)
+	# Set the framework search path for OS X
+    set(OGRE_FRAMEWORK_SEARCH_PATH
+      ${CMAKE_FRAMEWORK_PATH}
+      ~/Library/Frameworks
+      /Library/Frameworks
+      /System/Library/Frameworks
+      /Network/Library/Frameworks
+      ${CMAKE_CURRENT_SOURCE_DIR}/lib/macosx/Release
+      ${CMAKE_CURRENT_SOURCE_DIR}/lib/macosx/Debug
+    )
 else()
 	set(OGRE_LIBRARY_FWK "")
 endif()
@@ -217,16 +233,17 @@ endif ()
 
 find_library(OGRE_LIBRARY_REL NAMES ${OGRE_LIBRARY_NAMES} HINTS ${OGRE_LIB_SEARCH_PATH} ${OGRE_PKGC_LIBRARY_DIRS} ${OGRE_FRAMEWORK_SEARCH_PATH} PATH_SUFFIXES "" "Release" "RelWithDebInfo" "MinSizeRel")
 find_library(OGRE_LIBRARY_DBG NAMES ${OGRE_LIBRARY_NAMES_DBG} HINTS ${OGRE_LIB_SEARCH_PATH} ${OGRE_PKGC_LIBRARY_DIRS} ${OGRE_FRAMEWORK_SEARCH_PATH} PATH_SUFFIXES "" "Debug")
+
 make_library_set(OGRE_LIBRARY)
 
-if(APPLE)
-  set(OGRE_LIBRARY_DBG ${OGRE_LIB_SEARCH_PATH})
-endif()
 if (OGRE_INCOMPATIBLE)
   set(OGRE_LIBRARY "NOTFOUND")
 endif ()
 
-set(OGRE_INCLUDE_DIR ${OGRE_CONFIG_INCLUDE_DIR} ${OGRE_INCLUDE_DIR})
+if("${OGRE_FRAMEWORK_INCLUDES}" STREQUAL NOTFOUND)
+  unset(OGRE_FRAMEWORK_INCLUDES CACHE)
+endif()
+set(OGRE_INCLUDE_DIR ${OGRE_CONFIG_INCLUDE_DIR} ${OGRE_INCLUDE_DIR} ${OGRE_FRAMEWORK_INCLUDES})
 list(REMOVE_DUPLICATES OGRE_INCLUDE_DIR)
 findpkg_finish(OGRE)
 add_parent_dir(OGRE_INCLUDE_DIRS OGRE_INCLUDE_DIR)
@@ -261,16 +278,8 @@ if (OGRE_STATIC)
       set(X11_FOUND FALSE)
     endif ()
   endif ()
-  if (APPLE AND NOT OGRE_BUILD_PLATFORM_APPLE_IOS)
-    find_package(Cocoa QUIET)
-    find_package(Carbon QUIET)
-    find_package(CoreVideo QUIET)
-    if (NOT Cocoa_FOUND OR NOT Carbon_FOUND OR NOT CoreVideo_FOUND)
-      set(OGRE_DEPS_FOUND FALSE)
-    endif ()
-  endif ()
 
-  set(OGRE_LIBRARIES ${OGRE_LIBRARIES} ${ZZip_LIBRARIES} ${ZLIB_LIBRARIES} ${FreeImage_LIBRARIES} ${FREETYPE_LIBRARIES} )
+  set(OGRE_LIBRARIES ${OGRE_LIBRARIES} ${ZZip_LIBRARIES} ${ZLIB_LIBRARIES} ${FreeImage_LIBRARIES} ${FREETYPE_LIBRARIES})
 
   if (APPLE AND NOT OGRE_BUILD_PLATFORM_APPLE_IOS AND NOT ANDROID)
     set(OGRE_LIBRARIES ${OGRE_LIBRARIES} ${X11_LIBRARIES} ${X11_Xt_LIBRARIES} ${XAW_LIBRARY} ${X11_Xrandr_LIB} ${Carbon_LIBRARIES} ${Cocoa_LIBRARIES})
@@ -301,7 +310,7 @@ endif()
       endif()
       
       set(OGRE_BOOST_COMPONENTS thread date_time)
-      find_package(Boost COMPONENTS ${OGRE_BOOST_COMPONENTS} REQUIRED)
+      find_package(Boost COMPONENTS ${OGRE_BOOST_COMPONENTS} QUIET)
       if(Boost_FOUND AND Boost_VERSION GREATER 104900)
         if(Boost_VERSION GREATER 105300)
             set(OGRE_BOOST_COMPONENTS thread date_time system atomic chrono)
@@ -310,7 +319,7 @@ endif()
         endif()
       endif()
 
-      find_package(Boost COMPONENTS ${OGRE_BOOST_COMPONENTS} REQUIRED)
+      find_package(Boost COMPONENTS ${OGRE_BOOST_COMPONENTS} QUIET)
       if (NOT Boost_THREAD_FOUND)
         set(OGRE_DEPS_FOUND FALSE)
       else ()
@@ -379,12 +388,13 @@ set(OGRE_COMPONENT_SEARCH_PATH_DBG
 )
 
 macro(ogre_find_component COMPONENT HEADER)
+  set(OGRE_${COMPONENT}_FIND_QUIETLY ${OGRE_FIND_QUIETLY})
   findpkg_begin(OGRE_${COMPONENT})
   find_path(OGRE_${COMPONENT}_INCLUDE_DIR NAMES ${HEADER} HINTS ${OGRE_INCLUDE_DIRS} ${OGRE_PREFIX_SOURCE} PATH_SUFFIXES ${COMPONENT} OGRE/${COMPONENT} Components/${COMPONENT}/include)
   set(OGRE_${COMPONENT}_LIBRARY_NAMES "Ogre${COMPONENT}${OGRE_LIB_SUFFIX}")
   get_debug_names(OGRE_${COMPONENT}_LIBRARY_NAMES)
-  find_library(OGRE_${COMPONENT}_LIBRARY_REL NAMES ${OGRE_${COMPONENT}_LIBRARY_NAMES} HINTS ${OGRE_LIBRARY_DIR_REL} PATH_SUFFIXES "" "Release" "RelWithDebInfo" "MinSizeRel")
-  find_library(OGRE_${COMPONENT}_LIBRARY_DBG NAMES ${OGRE_${COMPONENT}_LIBRARY_NAMES_DBG} HINTS ${OGRE_LIBRARY_DIR_DBG} PATH_SUFFIXES "" "Debug")
+  find_library(OGRE_${COMPONENT}_LIBRARY_REL NAMES ${OGRE_${COMPONENT}_LIBRARY_NAMES} HINTS ${OGRE_LIBRARY_DIR_REL} ${OGRE_FRAMEWORK_PATH} PATH_SUFFIXES "" "Release" "RelWithDebInfo" "MinSizeRel")
+  find_library(OGRE_${COMPONENT}_LIBRARY_DBG NAMES ${OGRE_${COMPONENT}_LIBRARY_NAMES_DBG} HINTS ${OGRE_LIBRARY_DIR_DBG} ${OGRE_FRAMEWORK_PATH} PATH_SUFFIXES "" "Debug")
   make_library_set(OGRE_${COMPONENT}_LIBRARY)
   findpkg_finish(OGRE_${COMPONENT})
   if (OGRE_${COMPONENT}_FOUND)
@@ -397,6 +407,7 @@ macro(ogre_find_component COMPONENT HEADER)
 	  mark_as_advanced(OGRE_${COMPONENT}_BINARY_REL OGRE_${COMPONENT}_BINARY_DBG)
     endif()
   endif()
+  unset(OGRE_${COMPONENT}_FIND_QUIETLY)
 endmacro()
 
 # look for Paging component
@@ -437,11 +448,10 @@ macro(ogre_find_plugin PLUGIN HEADER)
   set(OGRE_${PLUGIN}_LIBRARY_NAMES "${PLUGIN}${OGRE_LIB_SUFFIX}")
   get_debug_names(OGRE_${PLUGIN}_LIBRARY_NAMES)
   set(OGRE_${PLUGIN}_LIBRARY_FWK ${OGRE_LIBRARY_FWK})
-
   find_library(OGRE_${PLUGIN}_LIBRARY_REL NAMES ${OGRE_${PLUGIN}_LIBRARY_NAMES}
-    HINTS "${OGRE_BUILD}/lib" ${OGRE_LIBRARY_DIRS} PATH_SUFFIXES "" OGRE OGRE-${OGRE_VERSION} opt Release Release/opt RelWithDebInfo RelWithDebInfo/opt MinSizeRel MinSizeRel/opt)
+    HINTS "${OGRE_BUILD}/lib" ${OGRE_LIBRARY_DIRS} ${OGRE_FRAMEWORK_PATH} PATH_SUFFIXES "" OGRE OGRE-${OGRE_VERSION} opt Release Release/opt RelWithDebInfo RelWithDebInfo/opt MinSizeRel MinSizeRel/opt)
   find_library(OGRE_${PLUGIN}_LIBRARY_DBG NAMES ${OGRE_${PLUGIN}_LIBRARY_NAMES_DBG}
-    HINTS "${OGRE_BUILD}/lib" ${OGRE_LIBRARY_DIRS} PATH_SUFFIXES "" OGRE OGRE-${OGRE_VERSION} opt Debug Debug/opt)
+    HINTS "${OGRE_BUILD}/lib" ${OGRE_LIBRARY_DIRS} ${OGRE_FRAMEWORK_PATH} PATH_SUFFIXES "" OGRE OGRE-${OGRE_VERSION} opt Debug Debug/opt)
   make_library_set(OGRE_${PLUGIN}_LIBRARY)
 
   if (OGRE_${PLUGIN}_LIBRARY OR OGRE_${PLUGIN}_INCLUDE_DIR)

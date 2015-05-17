@@ -13,10 +13,10 @@ HOW TO
 ------
 1. Create project/solution for the desired platform with cmake
 2. Compile the project/solution in "Release" configuration
-3. Launch the install procedure
+3. Launch the install procedure (any configuration)
 	- es. on VS, compile the INSTALL project
 	- es. with makefile, run "make install"
-4. Cut/copy/paste/rename "dist" folder wherever/how you like - application will always run if:
+4. Cut/copy/paste/rename "dist" folder wherever/how you like - application will always run, as soon as:
 	a. .cfg files are properly configured for the system the app runs
 	b. environment variable "OGRE_HOME" is properly set if app accesses data directly from OgreSDK
 

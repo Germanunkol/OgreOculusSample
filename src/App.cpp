@@ -51,16 +51,16 @@ void App::initOgre()
 
 	try
 	{
-		mRoot = new Ogre::Root("cfg/plugins.cfg", "%TEMP%/ogre.cfg", "%TEMP%/ogre.log");
+		mRoot = new Ogre::Root("cfg/plugins.cfg", "cfg/ogre.cfg", "ogre.log");
 	}
 	catch ( Ogre::FileNotFoundException &e )
 	{
 		try
 		{
 #ifdef _DEBUG
-			mRoot = new Ogre::Root("../../cfg/plugins_d.cfg", "%TEMP%/ogre.cfg", "%TEMP%/ogre.log");
+			mRoot = new Ogre::Root("../cfg/plugins_d.cfg", "../cfg/ogre.cfg", "../ogre.log");
 #else
-			mRoot = new Ogre::Root("../../cfg/plugins.cfg", "%TEMP%/ogre.cfg", "%TEMP%/ogre.log");
+			mRoot = new Ogre::Root("../cfg/plugins.cfg", "../cfg/ogre.cfg", "../ogre.log");
 #endif
 		}
 		catch ( Ogre::FileNotFoundException &e )

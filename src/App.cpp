@@ -80,40 +80,52 @@ App::~App()
 
 void App::initOgre()
 {
-	
+	// Config file class is an utility that parses and stores values from a .cfg file
+	Ogre::ConfigFile cf;
+	std::string configFilePathPrefix = "cfg/";			// configuration files default location when app is installed
+#ifdef _DEBUG
+	std::string pluginsFileName = "plugins_d.cfg";		// plugins config file name (Debug mode)
+#else
+	std::string pluginsFileName = "plugins.cfg";		// plugins config file name (Release mode)
+#endif
+	std::string resourcesFileName = "resources.cfg";	// resources config file name (Debug/Release mode)
+
+
+	// LOAD OGRE PLUGINS
+	// Try to load load up a valid config file (and don't start the program if none is found)
+	try
+	{
+		//This will work ONLY when application is installed (only Release application)!
+		cf.load(configFilePathPrefix + pluginsFileName);
+	}
+	catch (Ogre::FileNotFoundException &e)
+	{
+		try
+		{
+			// if no existing config, or could not restore it, try to load from a different location
+			configFilePathPrefix = "../cfg/";
+
+			//This will work ONLY when application is in development (Debug/Release configuration)
+			cf.load(configFilePathPrefix + pluginsFileName);			
+		}
+		catch (Ogre::FileNotFoundException &e)
+		{
+			// launch exception if no valid config file is found! - PROGRAM WON'T START!
+			throw e;
+		}
+	}
+
+
 	// INSTANCIATE OGRE ROOT (IT INSTANCIATES ALSO ALL OTHER OGRE COMPONENTS)
 	// In Ogre, the singletons are instanciated explicitly (with new) the first time,
 	// then it can be accessed with Ogre::Root::getSingleton()
 	// Plugins are passed as argument to the "Root" constructor
-	try
-	{
-		//This will work ONLY when application is installed! -- READ BELOW "ISSUE"
-		mRoot = new Ogre::Root("../cfg/plugins_d.cfg", "../cfg/ogre.cfg", "../ogre.log");
-	}
-	catch (Ogre::FileNotFoundException &e)	//ISSUE: no exception is launched by Ogre::Root.. !?
-											//FOR NOW change this from "../cfg/" to "cfg/" and from "plugins_d.cfg" to "plugins.cfg" before INSTALLING!!
-	{
-		try
-		{
-#ifdef _DEBUG
-			//This will work ONLY when application is in development (Debug configuration)
-			mRoot = new Ogre::Root("../cfg/plugins_d.cfg", "../cfg/ogre.cfg", "../ogre.log");
-#else
-			//This will work ONLY when application is in development (Release configuration)
-			mRoot = new Ogre::Root("../cfg/plugins.cfg", "../cfg/ogre.cfg", "../ogre.log");
-#endif
-		}
-		catch (Ogre::FileNotFoundException &e)
-		{
-			throw e;
-		}
-	}
-	
+	mRoot = new Ogre::Root(configFilePathPrefix + pluginsFileName, configFilePathPrefix + "ogre.cfg", "ogre.log");
+	// No Ogre::FileNotFoundException is thrown by this, that's why we tried to open it first with ConfigFile::load()
 
+	
 	// LOAD OGRE RESOURCES
-	// Load up resources according to resources.cfg
-	// Config file class is an utility that parses and stores values from a .cfg file
-	Ogre::ConfigFile cf;
+	// Load up resources according to resources.cfg ("cf" variable is reused)
 	try
 	{
 		//This will work ONLY when application is installed!
@@ -128,17 +140,11 @@ void App::initOgre()
 		}
 		catch (Ogre::FileNotFoundException &e)
 		{
+			// launch exception if no valid config file is found! - PROGRAM WON'T START!
 			throw e;
 		}
 	}
 
-
-	// Then setup THIS CLASS INSTANCE as a frame listener
-	// This means that Ogre will call frameStarted(), frameRenderingQueued() and frameEnded()
-	// automatically and periodically if defined in this class
-	mRoot->addFrameListener(this);
-
- 
     // Go through all sections & settings in the file
     Ogre::ConfigFile::SectionIterator seci = cf.getSectionIterator();
     Ogre::String secName, typeName, archName;
@@ -157,7 +163,13 @@ void App::initOgre()
 	}
 
 
-	// CUSTOMIZE OGRE RENDERING (with OpenGL)
+	// Then setup THIS CLASS INSTANCE as a frame listener
+	// This means that Ogre will call frameStarted(), frameRenderingQueued() and frameEnded()
+	// automatically and periodically if defined in this class
+	mRoot->addFrameListener(this);
+
+
+	// SELECT AND CUSTOMIZE OGRE RENDERING (OpenGL)
 	// Get a reference of the RenderSystem in Ogre that I want to customize
 	Ogre::RenderSystem* pRS = mRoot->getRenderSystemByName("OpenGL Rendering Subsystem");
 	// Get current config RenderSystem options in a ConfigOptionMap
@@ -175,7 +187,7 @@ void App::initOgre()
 	for(Ogre::ConfigOptionMap::iterator iter = cfgMap.begin(); iter != cfgMap.end(); iter++) pRS->setConfigOption(iter->first, iter->second.currentValue);
 	// Set this RenderSystem as the one I want to use
 	mRoot->setRenderSystem(pRS);
-	// Initialize it
+	// Initialize it: "false" is DO NOT CREATE A WINDOW FOR ME
 	mRoot->initialise(false, "Oculus Rift Visualization");
 
 

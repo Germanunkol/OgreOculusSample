@@ -5,7 +5,7 @@
 #ifndef APP_H
 #define APP_H
 
-class Rift;
+//class Rift;
 
 #include "Rift.h"
 #include <sstream>
@@ -18,6 +18,9 @@ class Rift;
 // The Debug window's size is the Oculus Rift Resolution times this factor.
 #define debugWindowSize 0.5
 
+// Creates the Ogre application
+// Constructor: initializes Ogre (initOgre) and OIS (initOIS), allocates the Scene and viewports (createViewports), inizializes Oculus (initRift) and STARTS RENDERING
+// Destructor: deallocates all above
 class App : public Ogre::FrameListener, public OIS::KeyListener, public OIS::MouseListener
 {
 	public:
@@ -28,6 +31,8 @@ class App : public Ogre::FrameListener, public OIS::KeyListener, public OIS::Mou
 		void quitOgre();
 		void initOIS();
 		void quitOIS();
+		//TODO: separate Ogre initialization from windows creation (Oculus NEEDS a window or to create a window to start!)
+		//void createWindows();
 		void createViewports();
 
 		void quit();

@@ -1,4 +1,27 @@
 #include "App.h"
+#include <chrono>
+
+void frames_per_second(int delay)
+{
+	static int num_frame = 0;
+	static int time = 0;
+
+	num_frame++;
+	time += delay;
+	if (time >= 1000)
+	{
+		std::cout << "fps:" << num_frame << std::endl;
+		num_frame = 0;
+		time = 0;
+	}
+
+}
+std::chrono::steady_clock::time_point last_request;
+std::chrono::duration< int, std::milli > delay;
+
+////////////////////////////////////////////////////////////
+// Init application
+////////////////////////////////////////////////////////////
 
 App::App()
 {
@@ -13,17 +36,26 @@ App::App()
 	mSmallWindow = NULL;
 	mRift = NULL;
 
+	//Ogre engine setup (creates Ogre main rendering window)
 	initOgre();
+
+	//Rift Setup (creates Oculus rendering window and Oculus inner scene - user shouldn't care about it)
+	initRift();
+
+	//Input/Output setup (associate I/O to Oculus window)
 	initOIS();
 
-	mScene = new Scene( mRoot, mMouse, mKeyboard );
+	// Create Ogre main scene (setup and populate main scene)
+	// This class implements App logic!!
+	mScene = new Scene(mRoot, mMouse, mKeyboard);
+	mScene->setIPD(mRift->getIPD());
 
+	//Viewport setup (link scene cameras to Ogre/Oculus windows)
 	createViewports();
-
-	initRift();
 
 	//Ogre::WindowEventUtilities::messagePump();
 
+	// START RENDERING!
 	mRoot->startRendering();
 }
 
@@ -42,42 +74,73 @@ App::~App()
 	quitOgre();
 }
 
-////////////////////////////////////////////////////////////
-// Handle Ogre (construction and destruction of ogre root):
-////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////
+// Init Ogre (construction, setup and destruction of ogre root):
+/////////////////////////////////////////////////////////////////
 
 void App::initOgre()
 {
-
+	
+	// INSTANCIATE OGRE ROOT (IT INSTANCIATES ALSO ALL OTHER OGRE COMPONENTS)
+	// In Ogre, the singletons are instanciated explicitly (with new) the first time,
+	// then it can be accessed with Ogre::Root::getSingleton()
+	// Plugins are passed as argument to the "Root" constructor
 	try
 	{
-		mRoot = new Ogre::Root("cfg/plugins.cfg", "cfg/ogre.cfg", "ogre.log");
+		//This will work ONLY when application is installed! -- READ BELOW "ISSUE"
+		mRoot = new Ogre::Root("../cfg/plugins_d.cfg", "../cfg/ogre.cfg", "../ogre.log");
 	}
-	catch ( Ogre::FileNotFoundException &e )
+	catch (Ogre::FileNotFoundException &e)	//ISSUE: no exception is launched by Ogre::Root.. !?
+											//FOR NOW change this from "../cfg/" to "cfg/" and from "plugins_d.cfg" to "plugins.cfg" before INSTALLING!!
 	{
 		try
 		{
 #ifdef _DEBUG
+			//This will work ONLY when application is in development (Debug configuration)
 			mRoot = new Ogre::Root("../cfg/plugins_d.cfg", "../cfg/ogre.cfg", "../ogre.log");
 #else
+			//This will work ONLY when application is in development (Release configuration)
 			mRoot = new Ogre::Root("../cfg/plugins.cfg", "../cfg/ogre.cfg", "../ogre.log");
 #endif
 		}
-		catch ( Ogre::FileNotFoundException &e )
+		catch (Ogre::FileNotFoundException &e)
+		{
+			throw e;
+		}
+	}
+	
+
+	// LOAD OGRE RESOURCES
+	// Load up resources according to resources.cfg
+	// Config file class is an utility that parses and stores values from a .cfg file
+	Ogre::ConfigFile cf;
+	try
+	{
+		//This will work ONLY when application is installed!
+		cf.load("cfg/resources.cfg");
+	}
+	catch (Ogre::FileNotFoundException &e)	// It works, no need to change anything
+	{
+		try
+		{
+			//This will work ONLY when application is in development (Debug/Release configuration)
+			cf.load("../cfg/resources.cfg");
+		}
+		catch (Ogre::FileNotFoundException &e)
 		{
 			throw e;
 		}
 	}
 
+
+	// Then setup THIS CLASS INSTANCE as a frame listener
+	// This means that Ogre will call frameStarted(), frameRenderingQueued() and frameEnded()
+	// automatically and periodically if defined in this class
 	mRoot->addFrameListener(this);
 
-	// Load up resources according to resources.cfg:
-	Ogre::ConfigFile cf;
-    cf.load("resources.cfg");
  
     // Go through all sections & settings in the file
     Ogre::ConfigFile::SectionIterator seci = cf.getSectionIterator();
- 
     Ogre::String secName, typeName, archName;
     while (seci.hasMoreElements())
     {
@@ -87,13 +150,19 @@ void App::initOgre()
         {
             typeName = i->first;
             archName = i->second;
+			//For each section/key-value, add a resource to ResourceGroupManager
             Ogre::ResourceGroupManager::getSingleton().addResourceLocation(
                 archName, typeName, secName);
         }
 	}
 
+
+	// CUSTOMIZE OGRE RENDERING (with OpenGL)
+	// Get a reference of the RenderSystem in Ogre that I want to customize
 	Ogre::RenderSystem* pRS = mRoot->getRenderSystemByName("OpenGL Rendering Subsystem");
+	// Get current config RenderSystem options in a ConfigOptionMap
 	Ogre::ConfigOptionMap cfgMap = pRS->getConfigOptions();
+	// Modify them
 	cfgMap["Full Screen"].currentValue = "No";
 	cfgMap["VSync"].currentValue = "Yes";
 	#ifdef _DEBUG
@@ -102,31 +171,86 @@ void App::initOgre()
 		cfgMap["FSAA"].currentValue = "8";
 	#endif
 	cfgMap["Video Mode"].currentValue = "1200 x 800";
+	// Set them back into the RenderSystem
 	for(Ogre::ConfigOptionMap::iterator iter = cfgMap.begin(); iter != cfgMap.end(); iter++) pRS->setConfigOption(iter->first, iter->second.currentValue);
+	// Set this RenderSystem as the one I want to use
 	mRoot->setRenderSystem(pRS);
+	// Initialize it
 	mRoot->initialise(false, "Oculus Rift Visualization");
 
-	// Create the Windows:
+
+	// CREATE WINDOWS
+	/* REMOVED: Rift class creates the window if no null is passed to its constructor
+	// Options for Window 1 (rendering window)
 	Ogre::NameValuePairList miscParams;
 	if( NO_RIFT )
 		miscParams["monitorIndex"] = Ogre::StringConverter::toString(0);
 	else
 		miscParams["monitorIndex"] = Ogre::StringConverter::toString(1);
 	miscParams["border "] = "none";
-	
+	*/
+
+	/*
+	// Create Window 1
+	if( !ROTATE_VIEW )
+	mWindow = mRoot->createRenderWindow("Oculus Rift Liver Visualization", 1280, 800, true, &miscParams);
+	//mWindow = mRoot->createRenderWindow("Oculus Rift Liver Visualization", 1920*0.5, 1080*0.5, false, &miscParams);
+	else
+	mWindow = mRoot->createRenderWindow("Oculus Rift Liver Visualization", 1080, 1920, true, &miscParams);
+	*/
+
+	// Options for Window 2 (debug window)
+	// This window will simply show what the two cameras see in two different viewports
 	Ogre::NameValuePairList miscParamsSmall;
 	miscParamsSmall["monitorIndex"] = Ogre::StringConverter::toString(0);
 
-	if( !ROTATE_VIEW )
-		mWindow = mRoot->createRenderWindow("Oculus Rift Liver Visualization", 1920, 1080, true, &miscParams);
-		//mWindow = mRoot->createRenderWindow("Oculus Rift Liver Visualization", 1920*0.5, 1080*0.5, false, &miscParams);
-	else
-		mWindow = mRoot->createRenderWindow("Oculus Rift Liver Visualization", 1080, 1920, true, &miscParams);
-
+	// Create Window 2
 	if( DEBUG_WINDOW )
 		mSmallWindow = mRoot->createRenderWindow("DEBUG Oculus Rift Liver Visualization", 1920*debugWindowSize, 1080*debugWindowSize, false, &miscParamsSmall);   
 
 	Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
+}
+
+void App::createViewports()
+{
+	// Create two viewports, one for each eye (i.e. one for each camera):
+	// Each viewport is assigned to a RenderTarget (a RenderWindow in this case) and spans half of the screen
+	// A pointer to a Viewport is returned, so we can access it directly.
+	// CAMERA -> render into -> VIEWPORT (rectangle area) -> displayed into -> WINDOW
+	/*
+	if (mWindow)		//check if Ogre rendering window has been created
+	{
+		if (NO_RIFT)
+		{
+			mViewportL = mWindow->addViewport(mScene->getLeftCamera(), 0, 0.0, 0.0, 0.5, 1.0);
+			mViewportL->setBackgroundColour(Ogre::ColourValue(0.15, 0.15, 0.15));
+			mViewportR = mWindow->addViewport(mScene->getRightCamera(), 1, 0.5, 0.0, 0.5, 1.0);
+			mViewportR->setBackgroundColour(Ogre::ColourValue(0.15, 0.15, 0.15));
+		}
+
+		if( !ROTATE_VIEW )
+		{
+		mScene->getLeftCamera()->setAspectRatio( 0.5*mWindow->getWidth()/mWindow->getHeight() );
+		mScene->getRightCamera()->setAspectRatio( 0.5*mWindow->getWidth()/mWindow->getHeight() );
+		} else {
+		mScene->getLeftCamera()->setAspectRatio( 0.5*mWindow->getHeight()/mWindow->getWidth() );
+		mScene->getRightCamera()->setAspectRatio( 0.5*mWindow->getHeight()/mWindow->getWidth() );
+		/
+	}
+	*/
+
+	// Plug the virtual stereo camera rig to Rift class (they will be rendered on Oculus screen)
+	mRift->setCameras(mScene->getLeftCamera(), mScene->getRightCamera());
+
+	// Create similar viewports to be displayed into PC window
+	if (mSmallWindow)
+	{
+		Ogre::Viewport* debugL = mSmallWindow->addViewport(mScene->getLeftCamera(), 0, 0.0, 0.0, 0.5, 1.0);
+		debugL->setBackgroundColour(Ogre::ColourValue(0.15, 0.15, 0.15));
+
+		Ogre::Viewport* debugR = mSmallWindow->addViewport(mScene->getRightCamera(), 1, 0.5, 0.0, 0.5, 1.0);
+		debugR->setBackgroundColour(Ogre::ColourValue(0.15, 0.15, 0.15));
+	}
 }
 
 void App::quitOgre()
@@ -136,7 +260,7 @@ void App::quitOgre()
 }
 
 ////////////////////////////////////////////////////////////
-// Handle OIS (construction and destruction of input):
+// Init OIS (construction, setup and destruction of input):
 ////////////////////////////////////////////////////////////
 
 void App::initOIS()
@@ -145,17 +269,17 @@ void App::initOIS()
     size_t windowHnd = 0;
     std::ostringstream windowHndStr;
  
-    //tell OIS about the Ogre window
+    // Tell OIS about the Ogre Rendering window (give its id)
     mWindow->getCustomAttribute("WINDOW", &windowHnd);
     windowHndStr << windowHnd;
     pl.insert(std::make_pair(std::string("WINDOW"), windowHndStr.str()));
 
-	//setup the manager, keyboard and mouse to handle input
+	// Setup the manager, keyboard and mouse to handle input
     OIS::InputManager* inputManager = OIS::InputManager::createInputSystem(pl);
     mKeyboard = static_cast<OIS::Keyboard*>(inputManager->createInputObject(OIS::OISKeyboard, true));
     mMouse = static_cast<OIS::Mouse*>(inputManager->createInputObject(OIS::OISMouse, true));
  
-    //tell OIS about the window's dimensions
+    // Tell OIS about the window's dimensions
     unsigned int width, height, depth;
     int top, left;
     mWindow->getMetrics(width, height, depth, left, top);
@@ -163,7 +287,9 @@ void App::initOIS()
     ms.width = width;
     ms.height = height;
 
-	// Make sure OIS calls callbacks (keyPressed, mouseMoved etc) of this class:
+	// Setup THIS CLASS INSTANCE as a OIS mouse listener AND key listener
+	// This means that OIS will call keyPressed(), mouseMoved(), etc.
+	// automatically and whenever needed
 	mKeyboard->setEventCallback(this);
 	mMouse->setEventCallback(this);
 }
@@ -174,20 +300,21 @@ void App::quitOIS()
 	if( mMouse ) delete mMouse;
 }
 
-////////////////////////////////////////////////////////////
-// Handle Rift Devices:
-////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
+// Init Rift (Device and API initialization, setup and close):
+////////////////////////////////////////////////////////////////
 
 void App::initRift()
 {
 	// Try to initialize the Oculus Rift (ID 0):
 	try {
-		Rift::init();
-		mRift = new Rift( 0, mRoot, mWindow, ROTATE_VIEW );
-		mRift->setCameras( mScene->getLeftCamera(), mScene->getRightCamera() );
-		mScene->setIPD( mRift->getIPD() );
-	} catch( const char* e ) {
-		std::cout << ">> " << e << std::endl;
+		// This class implements a custom C++ Class version of RIFT C API
+		//Rift::init();		//OPTIONAL: automatically called by Rift constructor, if necessary
+		mRift = new Rift( 0, mRoot, mWindow /*if null, Rift creates the window*/, ROTATE_VIEW );
+	}
+	catch (const std::ios_base::failure& e) {
+		std::cout << ">> " << e.what() << std::endl;
+		//NO_RIFT = true;
 		mRift = NULL;
 		mShutdown = true;
 	}
@@ -197,49 +324,21 @@ void App::quitRift()
 {
 	std::cout << "Shutting down Oculus Rifts:" << std::endl;
 	if( mRift ) delete mRift;
-	Rift::shutdown();
+	//Rift::shutdown();
 }
 
 ////////////////////////////////////////////////////////////
-// Handle Rendering:
+// Handle Rendering (Ogre::FrameListener)
 ////////////////////////////////////////////////////////////
 
-void App::createViewports()
-{
-	// Create two viewports, one for each eye (i.e. one for each camera):
-	// Each viewport spans half of the screen
-	if(mWindow)
-	{
-		if( NO_RIFT )
-		{
-			mViewportL = mWindow->addViewport(mScene->getLeftCamera(), 0, 0.0, 0.0, 0.5, 1.0 );
-			mViewportL->setBackgroundColour(Ogre::ColourValue(0.15,0.15,0.15));
-			mViewportR = mWindow->addViewport(mScene->getRightCamera(), 1, 0.5, 0.0, 0.5, 1.0 );
-			mViewportR->setBackgroundColour(Ogre::ColourValue(0.15,0.15,0.15));
-		}
-		
-		/*if( !ROTATE_VIEW )
-		{
-			mScene->getLeftCamera()->setAspectRatio( 0.5*mWindow->getWidth()/mWindow->getHeight() );
-			mScene->getRightCamera()->setAspectRatio( 0.5*mWindow->getWidth()/mWindow->getHeight() );
-		} else {
-			mScene->getLeftCamera()->setAspectRatio( 0.5*mWindow->getHeight()/mWindow->getWidth() );
-			mScene->getRightCamera()->setAspectRatio( 0.5*mWindow->getHeight()/mWindow->getWidth() );
-		}*/
-	}
-
-	if( mSmallWindow )
-	{
-		Ogre::Viewport* debugL = mSmallWindow->addViewport(mScene->getLeftCamera(), 0, 0.0, 0.0, 0.5, 1.0 );
-		debugL->setBackgroundColour(Ogre::ColourValue(0.15,0.15,0.15));
-
-		Ogre::Viewport* debugR = mSmallWindow->addViewport(mScene->getRightCamera(), 1, 0.5, 0.0, 0.5, 1.0 );
-		debugR->setBackgroundColour(Ogre::ColourValue(0.15,0.15,0.15));
-	}
-}
-
+// This gets called while rendering frame data is loading into GPU
+// Good time to update measurements and physics before rendering next frame!
 bool App::frameRenderingQueued(const Ogre::FrameEvent& evt) 
 {
+	//calculate delay and show
+	delay = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - last_request);
+	frames_per_second(delay.count());
+
 	if (mShutdown) return false;
 
 	if(mRift)
@@ -257,7 +356,11 @@ bool App::frameRenderingQueued(const Ogre::FrameEvent& evt)
 	mKeyboard->capture();
 	mMouse->capture();
 
+	//call updates on scene elements
 	mScene->update( evt.timeSinceLastFrame );
+
+	//get now time
+	last_request = std::chrono::system_clock::now();
 
 	//exit if key ESCAPE pressed 
 	if(mKeyboard->isKeyDown(OIS::KC_ESCAPE)) 
@@ -266,9 +369,9 @@ bool App::frameRenderingQueued(const Ogre::FrameEvent& evt)
 	return true; 
 }
 
-//////////////////////////////////////////////////////////////////////////
-// Handle Keyboard and Mouse input (and pass it on to the User Interface)
-//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+// Handle Keyboard and Mouse input (OIS::KeyListener, public OIS::MouseListener)
+//////////////////////////////////////////////////////////////////////////////////
 
 bool App::keyPressed( const OIS::KeyEvent& e )
 {
@@ -300,6 +403,10 @@ bool App::mouseReleased( const OIS::MouseEvent& e, OIS::MouseButtonID id )
 	return true;
 }
 
+// Interrupts App loop
+// frameRenderingQueued() will return false, thus interrupting Ogre loop
+// App could run again by calling "mRoot->startRendering()"
+// Destructor still needs to be called by user to deallocate application!
 void App::quit()
 {
 	std::cout << "QUIT." << std::endl;

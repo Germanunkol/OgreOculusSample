@@ -37,12 +37,16 @@ Rift::Rift( int ID, Ogre::Root* root, Ogre::RenderWindow* renderWindow, bool rot
 	mRenderWindow = renderWindow;
 
 	hmd = NULL;
+	mUseDummyHMD = false;
 
 	hmd = ovrHmd_Create( ID );
     if( !hmd )
 	{
 		hmd = NULL;
-		throw( "Could not connect to Rift." );
+		mUseDummyHMD = true;
+		std::cout << "[Rift] Could not conntect to Rift.\n\tUsing dummy." << std::endl;
+		return;
+		//throw( "Could not connect to Rift." );
 	}
 
 	std::cout << "Oculus Rift found." << std::endl;
@@ -54,7 +58,12 @@ Rift::Rift( int ID, Ogre::Root* root, Ogre::RenderWindow* renderWindow, bool rot
 	if (!ovrHmd_ConfigureTracking(hmd, ovrTrackingCap_Orientation | ovrTrackingCap_MagYawCorrection | ovrTrackingCap_Position, 0) )
 	{
 		ovrHmd_Destroy(hmd);
-		throw ("\t\tThis Rift does not support the features needed by the application.");
+		hmd = NULL;
+		mUseDummyHMD = true;
+		std::cout << "[Rift] This Rift does not support the features needed by the application."
+			<< "\n\tUsing dummy." << std::endl;
+		return;
+		//throw ("\t\tThis Rift does not support the features needed by the application.");
 	}
 
 	// Configure Render Textures:
@@ -196,6 +205,7 @@ Rift::Rift( int ID, Ogre::Root* root, Ogre::RenderWindow* renderWindow, bool rot
 	meshNode->setPosition( 0, 0, -1 );
 	meshNode->setScale( 1, 1, -1 );
 
+		std::cout << "\t[Rift] Adding viewport 3" << std::endl;
 	mViewport = mRenderWindow->addViewport( mCamera );
 	mViewport->setBackgroundColour(Ogre::ColourValue::Black);
 	mViewport->setOverlaysEnabled(true);
@@ -213,42 +223,69 @@ Rift::~Rift()
 // Takes the two cameras created in the scene and creates Viewports in the correct render textures:
 void Rift::setCameras( Ogre::Camera* camLeft, Ogre::Camera* camRight )
 {
-	Ogre::RenderTexture* renderTexture = mLeftEyeRenderTexture->getBuffer()->getRenderTarget();
-	renderTexture->addViewport(camLeft);
-	renderTexture->getViewport(0)->setClearEveryFrame(true);
-	renderTexture->getViewport(0)->setBackgroundColour(Ogre::ColourValue::Black);
-	renderTexture->getViewport(0)->setOverlaysEnabled(true);
+	if( ! mUseDummyHMD )
+	{
+		Ogre::RenderTexture* renderTexture = mLeftEyeRenderTexture->getBuffer()->getRenderTarget();
+		std::cout << "\t[Rift] Adding viewport 4" << std::endl;
+		renderTexture->addViewport(camLeft);
+		renderTexture->getViewport(0)->setClearEveryFrame(true);
+		renderTexture->getViewport(0)->setBackgroundColour(Ogre::ColourValue::Black);
+		renderTexture->getViewport(0)->setOverlaysEnabled(true);
 
-	renderTexture = mRightEyeRenderTexture->getBuffer()->getRenderTarget();
-	renderTexture->addViewport(camRight);
-	renderTexture->getViewport(0)->setClearEveryFrame(true);
-	renderTexture->getViewport(0)->setBackgroundColour(Ogre::ColourValue::Black);
-	renderTexture->getViewport(0)->setOverlaysEnabled(true);
-	
-	ovrFovPort fovLeft = hmd->DefaultEyeFov[ovrEye_Left];
-	ovrFovPort fovRight = hmd->DefaultEyeFov[ovrEye_Right];
+		std::cout << "\t[Rift] Adding viewport 5" << std::endl;
+		renderTexture = mRightEyeRenderTexture->getBuffer()->getRenderTarget();
+		renderTexture->addViewport(camRight);
+		renderTexture->getViewport(0)->setClearEveryFrame(true);
+		renderTexture->getViewport(0)->setBackgroundColour(Ogre::ColourValue::Black);
+		renderTexture->getViewport(0)->setOverlaysEnabled(true);
 
-	float combinedTanHalfFovHorizontal = std::max( fovLeft.LeftTan, fovLeft.RightTan );
-	float combinedTanHalfFovVertical = std::max( fovLeft.UpTan, fovLeft.DownTan );
+		ovrFovPort fovLeft = hmd->DefaultEyeFov[ovrEye_Left];
+		ovrFovPort fovRight = hmd->DefaultEyeFov[ovrEye_Right];
 
-	float aspectRatio = combinedTanHalfFovHorizontal / combinedTanHalfFovVertical;
-	
-	camLeft->setAspectRatio( aspectRatio );
-	camRight->setAspectRatio( aspectRatio );
-	
-	ovrMatrix4f projL = ovrMatrix4f_Projection ( fovLeft, 0.001, 50.0, true );
-	ovrMatrix4f projR = ovrMatrix4f_Projection ( fovRight, 0.001, 50.0, true );
+		float combinedTanHalfFovHorizontal = std::max( fovLeft.LeftTan, fovLeft.RightTan );
+		float combinedTanHalfFovVertical = std::max( fovLeft.UpTan, fovLeft.DownTan );
 
-	camLeft->setCustomProjectionMatrix( true,
-		Ogre::Matrix4( projL.M[0][0], projL.M[0][1], projL.M[0][2], projL.M[0][3],
-				projL.M[1][0], projL.M[1][1], projL.M[1][2], projL.M[1][3],
-				projL.M[2][0], projL.M[2][1], projL.M[2][2], projL.M[2][3],
-				projL.M[3][0], projL.M[3][1], projL.M[3][2], projL.M[3][3] ) );
-	camRight->setCustomProjectionMatrix( true,
-		Ogre::Matrix4( projR.M[0][0], projR.M[0][1], projR.M[0][2], projR.M[0][3],
-				projR.M[1][0], projR.M[1][1], projR.M[1][2], projR.M[1][3],
-				projR.M[2][0], projR.M[2][1], projR.M[2][2], projR.M[2][3],
-				projR.M[3][0], projR.M[3][1], projR.M[3][2], projR.M[3][3] ) );
+		float aspectRatio = combinedTanHalfFovHorizontal / combinedTanHalfFovVertical;
+
+		camLeft->setAspectRatio( aspectRatio );
+		camRight->setAspectRatio( aspectRatio );
+
+		ovrMatrix4f projL = ovrMatrix4f_Projection ( fovLeft, 0.001, 50.0, true );
+		ovrMatrix4f projR = ovrMatrix4f_Projection ( fovRight, 0.001, 50.0, true );
+
+		camLeft->setCustomProjectionMatrix( true,
+				Ogre::Matrix4( projL.M[0][0], projL.M[0][1], projL.M[0][2], projL.M[0][3],
+					projL.M[1][0], projL.M[1][1], projL.M[1][2], projL.M[1][3],
+					projL.M[2][0], projL.M[2][1], projL.M[2][2], projL.M[2][3],
+					projL.M[3][0], projL.M[3][1], projL.M[3][2], projL.M[3][3] ) );
+		camRight->setCustomProjectionMatrix( true,
+				Ogre::Matrix4( projR.M[0][0], projR.M[0][1], projR.M[0][2], projR.M[0][3],
+					projR.M[1][0], projR.M[1][1], projR.M[1][2], projR.M[1][3],
+					projR.M[2][0], projR.M[2][1], projR.M[2][2], projR.M[2][3],
+					projR.M[3][0], projR.M[3][1], projR.M[3][2], projR.M[3][3] ) );
+	} else {
+
+		// If using a dummy Rift, simply generate two viewports:
+		
+		std::cout << "[Rift] Adding viewport 1" << std::endl;
+		mLeftDummyViewport = mRenderWindow->addViewport( camLeft, 0 /*z-order*/,
+				0, 0, 0.5, 1.0 /*Dimensions*/ );
+		mLeftDummyViewport->setBackgroundColour(Ogre::ColourValue::Black);
+		mLeftDummyViewport->setOverlaysEnabled(true);
+
+		camLeft->setAspectRatio(
+				(float)mLeftDummyViewport->getActualWidth()/
+				(float)mLeftDummyViewport->getActualHeight() );
+
+		std::cout << "[Rift] Adding viewport 2" << std::endl;
+		mRightDummyViewport = mRenderWindow->addViewport( camRight, 1 /*z-order*/,
+				0.5, 0, 0.5, 1.0 /*Dimensions*/ );
+		mRightDummyViewport->setBackgroundColour(Ogre::ColourValue::Black);
+		mRightDummyViewport->setOverlaysEnabled(true);
+		camRight->setAspectRatio(
+				(float)mRightDummyViewport->getActualWidth()/
+				(float)mRightDummyViewport->getActualHeight() );
+	}
 }
 
 bool Rift::update( float dt )

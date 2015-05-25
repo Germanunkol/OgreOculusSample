@@ -24,10 +24,10 @@ extern "C" {
 			{
 				ROTATE_VIEW = true;
 			}
-			if( arg == "--no-rift" )
+			/*if( arg == "--no-rift" )
 			{
 				NO_RIFT = true;
-			}
+			}*/
 			if( arg == "--no-debug" )
 			{
 				DEBUG_WINDOW = false;
@@ -36,7 +36,7 @@ extern "C" {
 			{
 				std::cout << "Available Commands:" << std::endl
 					<< "\t--rotate-view\tChanges the orientation of the main render window. Useful when your computer can't rotate the screen." << std::endl
-					<< "\t--no-rift\tFor debugging: disable the Oculus Rift." << std::endl
+					//<< "\t--no-rift\tFor debugging: disable the Oculus Rift." << std::endl
 					<< "\t--no-debug\tDisables the debug window." << std::endl
 					<< "\t--help,-h\tShow this help message." << std::endl;
 				exit(0);	// show help and then close app.

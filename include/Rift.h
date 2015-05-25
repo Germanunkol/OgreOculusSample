@@ -58,10 +58,6 @@ class Rift
 		Ogre::Viewport* mViewport;
 		Ogre::SceneNode* mCamNode;
 
-		Ogre::SceneNode* mRoomNode;
-		Ogre::Camera* mCamLeft;
-		Ogre::Camera* mCamRight;
-
 		Ogre::SceneNode* mHeadNode;
 		Ogre::SceneNode* mBodyNode;
 		Ogre::SceneNode* mBodyTiltNode;
@@ -70,6 +66,12 @@ class Rift
 		Ogre::MaterialPtr mMatRight;
 
 		float mIPD;
+
+		// Set to true if the rift is not found and we should instead use a dummy.
+		bool mUseDummyHMD;
+
+		Ogre::Viewport* mLeftDummyViewport;
+		Ogre::Viewport* mRightDummyViewport;
 };
 
 #endif

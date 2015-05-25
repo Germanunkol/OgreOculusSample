@@ -92,23 +92,34 @@ void App::initOgre()
 
 	// Create the Windows:
 	Ogre::NameValuePairList miscParams;
-	if( NO_RIFT )
+	/*if( NO_RIFT )
 		miscParams["monitorIndex"] = Ogre::StringConverter::toString(0);
-	else
-		miscParams["monitorIndex"] = Ogre::StringConverter::toString(1);
+	else*/
+	miscParams["monitorIndex"] = Ogre::StringConverter::toString(1);
 	miscParams["border "] = "none";
 	
 	Ogre::NameValuePairList miscParamsSmall;
 	miscParamsSmall["monitorIndex"] = Ogre::StringConverter::toString(0);
 
+	// Generate a debug window first.
+	if( DEBUG_WINDOW )
+	{
+		mSmallWindow = mRoot->createRenderWindow("DEBUG Oculus Rift Liver Visualization",
+				1920*debugWindowSize, 1080*debugWindowSize, false, &miscParamsSmall);   
+	}
+
+
 	if( !ROTATE_VIEW )
-		mWindow = mRoot->createRenderWindow("Oculus Rift Liver Visualization", 1920, 1080, true, &miscParams);
+	{
+		mWindow = mRoot->createRenderWindow("Oculus Rift Liver Visualization",
+				1920, 1080, true, &miscParams);
+	}
 		//mWindow = mRoot->createRenderWindow("Oculus Rift Liver Visualization", 1920*0.5, 1080*0.5, false, &miscParams);
 	else
-		mWindow = mRoot->createRenderWindow("Oculus Rift Liver Visualization", 1080, 1920, true, &miscParams);
-
-	if( DEBUG_WINDOW )
-		mSmallWindow = mRoot->createRenderWindow("DEBUG Oculus Rift Liver Visualization", 1920*debugWindowSize, 1080*debugWindowSize, false, &miscParamsSmall);   
+	{
+		mWindow = mRoot->createRenderWindow("Oculus Rift Liver Visualization",
+				1080, 1920, true, &miscParams);
+	}
 
 	Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
 }
@@ -192,15 +203,15 @@ void App::createViewports()
 {
 	// Create two viewports, one for each eye (i.e. one for each camera):
 	// Each viewport spans half of the screen
-	if(mWindow)
-	{
-		if( NO_RIFT )
+	//if(mWindow)
+	//{
+		/*if( NO_RIFT )
 		{
 			mViewportL = mWindow->addViewport(mScene->getLeftCamera(), 0, 0.0, 0.0, 0.5, 1.0 );
 			mViewportL->setBackgroundColour(Ogre::ColourValue(0.15,0.15,0.15));
 			mViewportR = mWindow->addViewport(mScene->getRightCamera(), 1, 0.5, 0.0, 0.5, 1.0 );
 			mViewportR->setBackgroundColour(Ogre::ColourValue(0.15,0.15,0.15));
-		}
+		}*/
 		
 		/*if( !ROTATE_VIEW )
 		{
@@ -210,7 +221,7 @@ void App::createViewports()
 			mScene->getLeftCamera()->setAspectRatio( 0.5*mWindow->getHeight()/mWindow->getWidth() );
 			mScene->getRightCamera()->setAspectRatio( 0.5*mWindow->getHeight()/mWindow->getWidth() );
 		}*/
-	}
+	//}
 
 	if( mSmallWindow )
 	{

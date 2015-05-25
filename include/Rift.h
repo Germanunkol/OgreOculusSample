@@ -6,9 +6,10 @@
 #include "OVR.h"
 #include "Kernel/OVR_Math.h"
 #include "OGRE/Ogre.h"
+#include "OGRE/OgreSingleton.h"
 using namespace OVR;
 
-class Rift
+class Rift : public Ogre::Singleton<Rift>
 {
 	public:
 		Rift( int ID, Ogre::Root* root, Ogre::RenderWindow* renderWindow, bool rotateView );
@@ -37,6 +38,14 @@ class Rift
 		// Used to reset head position and orientation to "foreward".
 		// Call this when user presses 'R', for example.
 		void recenterPose();
+
+		// Use to set a custom texture (for example: loading screen/menu etc) on the rift:
+		void setTexture( std::string tex );
+
+		//! Find out if this is a dummy rift only.
+		/*! This will return to true if Rift wasn't found at startup.
+		 */
+		bool isDummyRift() { return mUseDummyHMD; }
 
 	private:
 

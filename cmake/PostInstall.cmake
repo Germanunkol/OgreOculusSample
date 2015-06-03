@@ -1,10 +1,11 @@
 # -------------------------------
 # Global variables used here are:
-#	- ${CMAKE_SOURCE_DIR}				(previously configured by cmake)
-# 	- ${CMAKE_INSTALL_PREFIX} 			(previously configured by cmake)
-set (OGRE_PLUGIN_DIR_REL "@OGRE_PLUGIN_DIR_REL@")	# SET BY configure_file()
-set (config_dir_name "@config_dir_name@")
-set (plugins_dir_name "@plugins_dir_name@")								# SET BY configure_file()
+#	- ${CMAKE_SOURCE_DIR}				(globally configured by cmake)
+# 	- ${CMAKE_INSTALL_PREFIX} 			(globally configured by cmake)
+set (OGRE_PLUGIN_DIR_REL "@OGRE_PLUGIN_DIR_REL@")		# values mirrored by configure_file()
+set (OGRE_MEDIA_FOLDER_NAME "@OGRE_MEDIA_FOLDER_NAME@")	# values mirrored by configure_file()
+set (config_dir_name "@config_dir_name@")				# values mirrored by configure_file()
+set (plugins_dir_name "@plugins_dir_name@")				# values mirrored by configure_file()
 
 #
 # -------------------------------
@@ -65,8 +66,9 @@ string(REGEX REPLACE "\n" "${Esc};" ContentsAsList "${RESOURCES_FILE}")
 unset(RESOURCES_FILE_MODIFIED)	# empty the variable if previously used..
 foreach(Line ${ContentsAsList})
 	# extracting path information (SKIP LOCAL PATHS -- [^.]+ means any string not containing "." which are locals)
-	string(REGEX MATCH "=([^.]+)/(media.*)${Esc}$" result ${Line})	# now CMAKE_MATCH_0 contains the whole match, as in "result"
-	if(NOT ${CMAKE_MATCH_0} STREQUAL "")
+	string(REGEX MATCH "=([^.]+)/(${OGRE_MEDIA_FOLDER_NAME}.*)${Esc}$" result ${Line})
+	# now CMAKE_MATCH_0 contains the whole match, as in "result"
+	if(NOT ${CMAKE_MATCH_0} STREQUAL "")	# --> result is not empty = a global path is found
 		# parsing source path info
 		set (resource_path_prefix ${CMAKE_MATCH_1})					# and CMAKE_MATCH_1 contains the submatch between first ()
 		set (resource_path_suffix ${CMAKE_MATCH_2})					# and CMAKE_MATCH_2 contains the submatch between second ()
